@@ -1,0 +1,10 @@
+---
+import { safeAsset } from '../lib/validation';
+interface Props { id: number; title: string; description: string | null; shortDescription: string | null; url: string; domain: string; icon: string | null; fallbackIcon?: string | null; category: string; tags: string[]; clickCount: number; showDescription: boolean; showClickCount: boolean }
+const { id, title, description, shortDescription, url, domain, icon, fallbackIcon, category, tags, clickCount, showDescription, showClickCount } = Astro.props;
+---
+<a class="site-card" href={url} target="_blank" rel="noopener noreferrer" data-site-id={id} data-search={`${title} ${domain} ${description ?? ''} ${category} ${tags.join(' ')}`} data-preview={description || shortDescription || domain} aria-label={`访问 ${title}`}>
+  <span class="site-icon"><img src={safeAsset(icon || fallbackIcon)} alt="" loading="lazy" decoding="async" width="42" height="42" onerror="this.onerror=null;this.src='/images/default.svg'" /></span>
+  <span class="site-info"><strong>{title}</strong>{showDescription && <small>{shortDescription || description || domain}</small>}</span>
+  {showClickCount && <span class="site-count" title="访问次数">{clickCount}</span>}
+</a>

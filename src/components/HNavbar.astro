@@ -1,0 +1,187 @@
+---
+import { categories } from '../data/navLinks.js';
+const validCategories = Array.isArray(categories) ? categories : [];
+---
+<div id="hnavbar" class="mb-6">
+  <div class="w-full px-1">
+    <div class="overflow-x-auto scrollbar-hide" id="category-scroll">
+      <div class="inline-flex whitespace-nowrap py-2 px-1 mx-auto rounded-full bg-gray-200/70 dark:bg-gray-800/70 border border-gray-300/60 dark:border-gray-600/60 shadow-sm">
+        {validCategories.map((category) => (
+          <a 
+            href={`#${category.id}`} 
+            class="flex flex-row items-center justify-start min-w-[90px] sm:min-w-[100px] px-3 py-1.5 mx-0.5 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/90 hover:bg-gray-50 dark:hover:bg-gray-700 hover:shadow-sm transition-all"
+            draggable="false"
+            data-category-id={category.id}
+          >
+            <div class="w-6 h-6 mr-2 flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-800 rounded-full overflow-hidden shadow-[0_1px_2px_rgba(0,0,0,0.05)] dark:shadow-[0_1px_2px_rgba(0,0,0,0.2)]">
+              <img 
+                src={category.icon} 
+                alt={`${category.name} 分类图标`} 
+                class="w-4 h-4 opacity-0 transition-opacity duration-300" 
+                loading="lazy"
+                onload="this.classList.remove('opacity-0')"
+                width="16"
+                height="16"
+              />
+            </div>
+            <span class="text-xs font-medium text-gray-700 dark:text-gray-300 truncate max-w-[60px] sm:max-w-[70px]">
+              {category.name.length > 5 ? `${category.name.substring(0, 5)}...` : category.name}
+            </span>
+          </a>
+        ))}
+      </div>
+    </div>
+  </div>
+</div>
+<style>
+  /* 隐藏滚动条但保留滚动功能 */
+  .scrollbar-hide {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none; 
+  }
+  /* 平滑滚动 */
+  html {
+    scroll-behavior: smooth;
+  }
+</style>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const categoryLinks = document.querySelectorAll('#hnavbar a[data-category-id]');
+    const categoryScroll = document.getElementById('category-scroll');
+    if (categoryScroll) {
+      const savedScrollLeft = localStorage.getItem('categoryScrollPosition');
+      if (savedScrollLeft) {
+        categoryScroll.scrollLeft = parseInt(savedScrollLeft, 10);
+      }
+    }
+    if (categoryScroll) {
+      categoryLinks.forEach(link => {
+        link.addEventListener('dragstart', (e) => {
+          e.preventDefault();
+          return false;
+        });
+        link.addEventListener('contextmenu', (e) => {
+          e.preventDefault();
+          return false;
+        });
+        link.addEventListener('selectstart', (e) => {
+          e.preventDefault();
+          return false;
+        });
+        link.addEventListener('touchstart', () => {
+          link.setAttribute('data-touch-start', Date.now().toString());
+        }, { passive: true });
+        link.addEventListener('touchend', (e) => {
+          const touchStart = parseInt(link.getAttribute('data-touch-start') || '0');
+          const touchDuration = Date.now() - touchStart;
+          if (touchDuration > 300) {
+            e.preventDefault();
+          }
+        });
+      });
+      categoryScroll.addEventListener('wheel', (e) => {
+        if (e.deltaY !== 0) {
+          e.preventDefault();
+          categoryScroll.scrollLeft += e.deltaY;
+        }
+      }, { passive: false });
+      let isMouseDown = false;
+      let startX = 0;
+      let scrollLeftStart = 0;
+      categoryScroll.addEventListener('mousedown', (e) => {
+        isMouseDown = true;
+        startX = e.pageX - categoryScroll.offsetLeft;
+        scrollLeftStart = categoryScroll.scrollLeft;
+      });
+      categoryScroll.addEventListener('mouseleave', () => {
+        isMouseDown = false;
+      });
+      categoryScroll.addEventListener('mouseup', () => {
+        isMouseDown = false;
+      });
+      categoryScroll.addEventListener('mousemove', (e) => {
+        if (!isMouseDown) return;
+        e.preventDefault();
+        const x = e.pageX - categoryScroll.offsetLeft;
+        const walk = (x - startX) * 0.8; 
+        categoryScroll.scrollLeft = scrollLeftStart - walk;
+      });
+      let touchStartX = 0;
+      let scrollLeft = 0;
+      categoryScroll.addEventListener('touchstart', (e) => {
+        touchStartX = e.touches[0].clientX;
+        scrollLeft = categoryScroll.scrollLeft;
+      }, { passive: true });
+      categoryScroll.addEventListener('touchmove', (e) => {
+        if (e.touches.length > 0) {
+          const touchX = e.touches[0].clientX;
+          const diff = touchStartX - touchX;
+          categoryScroll.scrollLeft = scrollLeft + diff;
+        }
+      }, { passive: true });
+    }
+    categoryLinks.forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const categoryId = link.getAttribute('data-category-id') || '';
+        const targetSection = document.getElementById(categoryId);
+        if (targetSection) {
+          const headerHeight = document.getElementById('main-header')?.offsetHeight || 0;
+          const docHeight = Math.max(
+            document.body.scrollHeight,
+            document.body.offsetHeight,
+            document.documentElement.clientHeight,
+            document.documentElement.scrollHeight,
+            document.documentElement.offsetHeight
+          );
+          const viewportHeight = window.innerHeight;
+          let scrollPosition = targetSection.offsetTop - headerHeight - 20;
+          const nextSection = targetSection.nextElementSibling;
+          if (!nextSection || !nextSection.id) {
+            scrollPosition = docHeight - viewportHeight;
+          }
+          window.scrollTo({
+            top: scrollPosition,
+            behavior: 'smooth'
+          });
+        }
+      });
+    });
+    const highlightCurrentCategory = () => {
+      const sections = Array.from(document.querySelectorAll('section[id]'));
+      if (sections.length === 0) return;
+      const scrollPosition = window.scrollY;
+      const headerHeight = document.getElementById('main-header')?.offsetHeight || 0;
+      const offset = headerHeight + 20; 
+      let currentSection = null;
+      for (const section of sections) {
+        const sectionEl = section as HTMLElement;
+        if (sectionEl.offsetTop - offset <= scrollPosition) {
+          currentSection = section;
+        } else {
+          break;
+        }
+      }
+      categoryLinks.forEach(link => {
+        link.classList.remove('bg-gray-100', 'dark:bg-gray-800', 'font-semibold');
+      });
+      if (currentSection) {
+        const categoryId = currentSection.id;
+        const activeLink = document.querySelector(`#hnavbar a[data-category-id="${categoryId}"]`);
+        if (activeLink) {
+          activeLink.classList.add('bg-gray-100', 'dark:bg-gray-800', 'font-semibold');
+        }
+      }
+    };
+    highlightCurrentCategory();
+    window.addEventListener('scroll', highlightCurrentCategory, { passive: true });
+    if (categoryScroll) {
+      categoryScroll.addEventListener('scroll', () => {
+        localStorage.setItem('categoryScrollPosition', categoryScroll.scrollLeft.toString());
+      }, { passive: true });
+    }
+  });
+</script>

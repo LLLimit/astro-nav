@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48" fill="none">
+  <!-- 肯塔基蓝色背景 -->
+  <rect width="48" height="48" rx="8" fill="#0033A0"/>
+  
+  <!-- 波浪/大海元素 -->
+  <path d="M0 36C8 32 16 40 24 36C32 32 40 40 48 36V48H0V36Z" fill="#0044CC" opacity="0.6"/>
+  <path d="M0 40C8 36 16 44 24 40C32 36 40 44 48 40V48H0V40Z" fill="#0055FF" opacity="0.4"/>
+  
+  <!-- 船帆元素 -->
+  <path d="M24 10L14 30H34L24 10Z" fill="white"/>
+  <path d="M24 16L34 30H24V16Z" fill="#DDDDDD"/>
+  
+  <!-- 科技感元素 -->
+  <circle cx="24" cy="24" r="16" stroke="white" stroke-width="1" stroke-dasharray="2 2" fill="none"/>
+  <circle cx="24" cy="24" r="12" stroke="white" stroke-width="1" opacity="0.7" fill="none"/>
+  
+  <!-- 船体 -->
+  <path d="M14 30C14 30 19 33 24 33C29 33 34 30 34 30" stroke="white" stroke-width="2" stroke-linecap="round"/>
+</svg>

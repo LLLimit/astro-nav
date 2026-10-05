@@ -1,0 +1,1 @@
+ALTER TABLE `sites` ADD `og_image` varchar(1024);

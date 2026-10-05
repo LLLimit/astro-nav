@@ -1,0 +1,46 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+import Header from '../components/Header.astro';
+import Sidebar from '../components/Sidebar.astro';
+import Card from '../components/Card.astro';
+import { safeAsset } from '../lib/validation';
+import { getSettings, listCategories, listSites, listTagsBySite } from '../db/repository';
+const settings = await getSettings();
+const [categories, rows, tags] = await Promise.all([listCategories(), listSites(true), listTagsBySite()]);
+const categoryNav = categories.map(category => ({ ...category, count: rows.filter(row => row.site.categoryId === category.id).length }));
+---
+<MainLayout settings={settings}>
+  <div class="ambient" aria-hidden="true"></div>
+  <main class="page-main">
+    <Header settings={settings} />
+    <div class="content-layout">
+      <Sidebar categories={categoryNav} />
+      <div class="category-content">
+      {categories.length === 0 && <div class="empty-state">暂无分类，请管理员先导入或添加内容。</div>}
+      {categories.map(category => {
+        const items = rows.filter(row => row.site.categoryId === category.id);
+        return <section class="category-section" id={`category-${category.id}`}>
+          <div class="section-heading"><div class="section-title"><span class="section-icon">{category.icon ? <img src={safeAsset(category.icon)} alt="" width="21" height="21" /> : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>}</span><div><h2>{category.name}</h2>{category.description && <p>{category.description}</p>}</div></div><span class="section-count">{items.length} 个网站</span></div>
+          <div class={`site-grid ${settings.cardLayout === 'compact' ? 'compact' : ''}`}>
+            {items.map(({site}) => <Card id={site.id} title={site.title} description={site.description} shortDescription={site.shortDescription} url={site.url} domain={site.domain} icon={site.icon} fallbackIcon={category.icon} category={category.name} tags={tags[site.id] ?? []} clickCount={site.clickCount} showDescription={settings.showDescription} showClickCount={settings.showClickCount} />)}
+          </div>
+        </section>;
+      })}
+      </div>
+    </div>
+    <footer class="public-footer">
+      <div class="footer-links">
+        <span>© 2026</span>
+        <span class="footer-divider" aria-hidden="true">|</span>
+        <a href="https://blog.darkduck.fun/" target="_blank" rel="noopener noreferrer"><span aria-hidden="true">🌐</span> 我的博客</a>
+        <span class="footer-divider" aria-hidden="true">|</span>
+        <a href="https://astro.build/" target="_blank" rel="noopener noreferrer"><span aria-hidden="true">✍️</span> 基于 Astro</a>
+        <span class="footer-divider" aria-hidden="true">|</span>
+        <a href="https://github.com/LLLimit" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .9a11.1 11.1 0 0 0-3.51 21.63c.55.1.76-.24.76-.54v-2.12c-3.1.67-3.75-1.32-3.75-1.32-.5-1.28-1.23-1.62-1.23-1.62-1.01-.69.08-.68.08-.68 1.12.08 1.71 1.15 1.71 1.15.99 1.69 2.6 1.2 3.23.92.1-.72.39-1.2.71-1.48-2.47-.28-5.06-1.24-5.06-5.49 0-1.22.44-2.21 1.15-2.99-.12-.28-.5-1.42.11-2.95 0 0 .94-.3 3.05 1.14a10.6 10.6 0 0 1 5.56 0c2.11-1.43 3.04-1.14 3.04-1.14.61 1.53.23 2.67.12 2.95.72.78 1.14 1.77 1.14 2.99 0 4.26-2.59 5.2-5.07 5.48.4.35.75 1.02.75 2.06v3.06c0 .3.2.65.77.54A11.1 11.1 0 0 0 12 .9Z"/></svg> GitHub</a>
+      </div>
+      <p>资源来源于网络，如有侵权请联系</p>
+    </footer>
+  </main>
+  <button id="back-to-top" class="back-to-top" type="button" aria-label="返回顶部">↑</button>
+</MainLayout>
+<script src="../scripts/frontend.ts"></script>

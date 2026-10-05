@@ -1,0 +1,85 @@
+/* Neutral control room, independent of the public theme selection. */
+.login-wrap,.admin-shell { background:#f5f5f7; color:#171717; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif; }
+.login-wrap { background:radial-gradient(circle at 50% 0%,#fff 0%,#f5f5f7 48%,#e8e8eb 100%); }
+.login-card { width:min(440px,100%); padding:40px; gap:17px; border:1px solid #e0e0e2; border-radius:25px; box-shadow:0 30px 80px rgba(0,0,0,.09),0 2px 6px rgba(0,0,0,.025); }
+.login-card .admin-logo { display:block; width:300px; max-width:100%; height:90px; object-fit:contain; object-position:left center; margin:-12px 0 3px -5px; }
+.login-card h1 { font-size:28px; letter-spacing:-.05em; }
+.login-card p { color:#66666c; }
+.login-card small { color:#34343a; font-weight:600; }
+.login-card input,.form-stack input,.form-stack select,.form-stack textarea,.settings-grid input,.settings-grid select,.settings-grid textarea,.toolbar input,.toolbar select { border:1px solid #d7d7da; border-radius:11px; background:#fff; color:#171717; outline-color:#171717; min-height:42px; transition:border-color .2s,box-shadow .2s; }
+.login-card input:focus,.form-stack input:focus,.form-stack select:focus,.form-stack textarea:focus,.settings-grid input:focus,.settings-grid select:focus,.settings-grid textarea:focus,.toolbar input:focus,.toolbar select:focus { border-color:#171717; box-shadow:0 0 0 3px rgba(0,0,0,.08); }
+.login-card button,.primary { background:#171717; color:#fff; border:1px solid #171717; border-radius:11px; padding:10px 17px; transition:background .2s,transform .2s,box-shadow .2s; }
+.login-card button:hover,.primary:hover { background:#000; transform:translateY(-1px); box-shadow:0 6px 15px rgba(0,0,0,.14); }
+.login-card button:disabled,.primary:disabled { opacity:.55; cursor:wait; transform:none; }
+
+.admin-side { width:250px; padding:21px 15px; background:#121212; color:#fff; border-right:0; }
+.admin-brand { min-height:105px; padding:4px 7px 22px; overflow:hidden; }
+.admin-brand .admin-logo { width:240px; max-width:none; height:79px; object-fit:contain; object-position:left center; margin-left:-13px; }
+.admin-side nav { gap:6px; }
+.admin-side nav button,.logout { min-height:42px; padding:10px 13px; color:#a5a5aa; font-weight:600; border-radius:10px; transition:background .2s,color .2s,transform .2s; }
+.admin-side nav button:hover,.admin-side nav .selected,.logout:hover { background:#2a2a2c; color:#fff; }
+.admin-side nav button:hover { transform:translateX(2px); }
+.logout { margin-top:auto; border-top:1px solid #333; border-radius:0; }
+.admin-main { max-width:1800px; padding:0 clamp(20px,3.4vw,58px) 70px; }
+.admin-top { height:82px; margin-bottom:34px; border-bottom:1px solid #dedee1; }
+.admin-top span { font-size:13px; color:#606066; text-transform:uppercase; letter-spacing:.13em; }
+.admin-top a { color:#171717; font-weight:700; }
+.admin-top a:hover { text-decoration:underline; text-underline-offset:4px; }
+.admin-top button { color:#171717; }
+.admin-main h1 { font-size:clamp(27px,3vw,36px); font-weight:740; letter-spacing:-.055em; }
+.admin-main h2 { font-size:18px; letter-spacing:-.025em; }
+.panel-head { margin-bottom:23px; }
+.panel-head p { color:#717177; font-size:14px; }
+.panel,.summary-card { background:#fff; border:1px solid #e3e3e6; border-radius:17px; box-shadow:0 8px 25px rgba(0,0,0,.027); }
+.panel { padding:24px; margin-bottom:20px; }
+.summary-grid { gap:12px; margin-bottom:20px; }
+.summary-card { min-height:112px; padding:19px 20px; }
+.summary-card small { color:#727278; font-weight:600; }
+.summary-card strong { display:block; margin-top:8px; font-size:30px; letter-spacing:-.05em; color:#111; }
+.toolbar { gap:10px; }
+.toolbar button,.pagination button,.admin-row button,#parse-site,#clear-background,.glass-confirm-actions button { border:1px solid #d5d5d8; background:#fff; color:#242428; border-radius:10px; min-height:38px; padding:8px 13px; font-weight:600; transition:background .2s,border-color .2s,transform .2s; }
+.toolbar button:hover,.pagination button:hover,.admin-row button:hover,#parse-site:hover,#clear-background:hover { background:#f0f0f2; border-color:#8c8c92; transform:translateY(-1px); }
+.toolbar .primary,.admin-row .primary { border-color:#171717; background:#171717; color:#fff; }
+.toolbar .primary:hover,.admin-row .primary:hover { background:#000; }
+.toolbar .danger,.admin-row .danger { color:#171717; border-color:#828288; border-style:dashed; }
+.admin-list { gap:10px; }
+.admin-row { border:1px solid #e2e2e5; border-radius:13px; background:#fff; padding:15px; transition:box-shadow .2s,border-color .2s; }
+.admin-row:hover { border-color:#b8b8bd; box-shadow:0 6px 22px rgba(0,0,0,.045); }
+.admin-row small { color:#77777d; }
+.badge,.badge.off { color:#242428; background:#eeeef0; border:1px solid #dfdfe2; }
+.badge.off { color:#818187; background:#f6f6f7; }
+.settings-grid { gap:20px; }
+.settings-grid > label,.form-stack > label { color:#333338; }
+.wallpaper-preview { border:1px solid #d8d8de; border-radius:17px; background:#202b40 url('/images/glass-wallpaper.svg') center/cover; color:#fff; }
+.wallpaper-preview span { background:rgba(255,255,255,.17); color:#fff; border:1px solid rgba(255,255,255,.5); box-shadow:inset 0 1px rgba(255,255,255,.6),0 10px 25px rgba(0,0,0,.16); backdrop-filter:blur(20px) saturate(1.5); -webkit-backdrop-filter:blur(20px) saturate(1.5); }
+.wallpaper-help { color:#64646a; }
+.check-group label,.checkline { color:#34343a; }
+.check-group input,.checkline input { accent-color:#171717; }
+.form-stack label.visibility-setting { flex-direction:row; align-items:center; justify-content:space-between; gap:16px; margin-top:14px; padding:15px 16px; border:1px solid #e3e3e6; border-radius:13px; background:#f8f8fa; cursor:pointer; }
+.visibility-copy { display:grid; gap:4px; min-width:0; }
+.visibility-copy strong { font-size:14px; color:#171717; }
+.visibility-copy small,.sort-help { color:#6e6e73; font-size:12px; font-weight:400; line-height:1.5; }
+.switch-control { position:relative; display:block; flex:none; width:44px; height:26px; }
+.visibility-setting .switch-control > input { position:absolute; inset:0; z-index:1; width:100%; height:100%; min-height:0; padding:0; margin:0; opacity:0; cursor:pointer; }
+.switch-track { display:block; width:44px; height:26px; border:1px solid #d4d4d8; border-radius:99px; background:#e5e5e7; transition:background .2s,border-color .2s; }
+.switch-track::after { content:""; position:absolute; top:3px; left:3px; width:20px; height:20px; border-radius:50%; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,.15); transition:transform .2s; }
+.switch-control > input:checked + .switch-track { background:#171717; border-color:#171717; }
+.switch-control > input:checked + .switch-track::after { transform:translateX(18px); }
+.switch-control > input:focus-visible + .switch-track { outline:2px solid #171717; outline-offset:3px; }
+.switch-control > input:disabled + .switch-track { opacity:.45; }
+@media(prefers-reduced-motion:reduce) { .switch-track,.switch-track::after { transition:none; } }
+.upload-row label { color:#333338; }
+.favicon-control { display:grid; grid-template-columns:48px 1fr; gap:10px 14px; align-items:center; padding:16px; border:1px solid #e3e3e6; border-radius:13px; background:#f8f8fa; }
+.favicon-control img { object-fit:contain; padding:5px; border-radius:8px; background:#fff; border:1px solid #e3e3e6; }
+.favicon-control small { grid-column:1 / -1; color:#717177; }
+#admin-message { top:22px; right:23px; z-index:1000; max-width:min(410px,calc(100vw - 46px)); padding:15px 19px 15px 43px; border:1px solid #111; border-radius:13px; background:#171717; color:#fff; box-shadow:0 18px 48px rgba(0,0,0,.23); font-weight:700; line-height:1.45; }
+#admin-message::before { content:"✓"; position:absolute; left:16px; top:14px; font-size:18px; }
+#admin-message.error { background:#171717; color:#fff; border:2px solid #fff; outline:1px solid #171717; }
+#admin-message.error::before { content:"!"; }
+#edit-dialog { border:1px solid #e0e0e3; border-radius:20px; background:#fff; color:#171717; box-shadow:0 36px 110px rgba(0,0,0,.3); }
+#edit-dialog::backdrop { background:rgba(0,0,0,.52); backdrop-filter:blur(5px); }
+.dialog-head button { color:#171717; }
+.import-status,.import-status.error { color:#505056; }
+.chart { color:#171717; }
+@media(max-width:850px) { .admin-side { box-shadow:0 18px 55px rgba(0,0,0,.35); } .admin-main { padding-inline:18px; } }
+@media(max-width:520px) { .login-card { padding:26px; } .admin-top { height:65px; margin-bottom:24px; } .panel { padding:17px; } }

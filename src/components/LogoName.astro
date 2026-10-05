@@ -1,0 +1,84 @@
+---
+/**
+ * LogoName组件 (LogoName.astro)
+ * 网站Logo和名称的共用组件
+ * 目前使用场景：
+ * - 顶部导航栏
+ * - 侧边栏
+ * 组件功能：
+ * 1. 显示网站主标题：ZYWE导航站（使用Astro 5.10.0响应式图像优化）
+ * 2. 显示网站小标题：网站收藏夹
+ */
+import { Image } from 'astro:assets';
+export interface Props {
+  class?: string;
+  showSubtitle?: boolean;
+}
+const {
+  class: className = "",
+  showSubtitle = false
+} = Astro.props as Props;
+//记得修改
+---
+<a href="/" class={`flex items-center space-x-2 ${className}`}>
+  <!-- 网站logo -->
+  <Image
+    src="/images/logo.svg"
+    alt="Zywe 导航站 Logo"
+    class="h-9 w-9"
+    width={36}
+    height={36}
+    priority
+    style="filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.1));"
+  />
+  <!-- 网站名称（ZYWE导航站） -->
+  <div class="flex flex-col items-start logo-text-container">
+    <span class="text-xl font-extrabold tracking-tight bg-clip-text text-transparent transform -skew-x-6 logo-main-text" style="text-shadow: 1px 1px 0px rgba(0,0,0,0.1); letter-spacing: 0.05em;">
+      ZYWE
+    </span>
+    <span class="text-base font-bold text-blue-600 dark:text-blue-400 tracking-wide transform translate-x-2 -translate-y-1" style="letter-spacing: 0.1em;">
+      导航站
+    </span>
+  </div>
+  <!-- 网站小标题: 网站式收藏夹 -->
+  {showSubtitle && (
+    <div class="ml-8 hidden sm:block">
+      <span class="text-base font-black tracking-wide subtitle-style">网站式收藏夹</span>
+    </div>
+  )}
+</a>
+<style>
+  .logo-main-text {
+    background-image: linear-gradient(90deg, #0467a1, #5ba2f3, #7c3aed, #4f46e5, #0467a1);
+    background-size: 300% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    transition: all 0.6s ease;
+    text-shadow: 1px 1px 0px rgba(0,0,0,0.1);
+    letter-spacing: 0.05em;
+  }
+  .logo-text-container:hover .logo-main-text {
+    background-position: 100% 0;
+    transform: translateY(-2px) skew(-6deg);
+    animation: letter-dance 1.5s ease;
+  }
+  @keyframes letter-dance {
+    0%, 100% { transform: translateY(0) skew(-6deg); }
+    25% { transform: translateY(-5px) skew(-5deg); }
+    50% { transform: translateY(-2px) skew(-7deg); }
+    75% { transform: translateY(-3px) skew(-4deg); }
+  }
+  .subtitle-style {
+    transform: perspective(800px) rotateX(3deg) rotateY(-5deg); 
+    display: inline-block; 
+    letter-spacing: 0.3em;
+    background: linear-gradient(135deg, #0467a1, #5ba2f3, #72e1f1);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-shadow: 0px 1px 2px rgba(44, 43, 43, 0.1);
+    font-size: 1.40rem;
+    font-weight: 900;
+  }
+</style>

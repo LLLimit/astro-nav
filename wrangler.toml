@@ -1,0 +1,6 @@
+# wrangler.toml
+name = "astro-xwnav-theme"
+compatibility_date = "2025-06-11"
+
+[assets]
+directory = "./dist"

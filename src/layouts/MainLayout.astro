@@ -1,0 +1,49 @@
+---
+import '../styles/global.css';
+import '../styles/theme-refresh.css';
+import { siteSettingsSchema, type SiteSettings } from '../db/repository';
+import { safeAsset } from '../lib/validation';
+interface Props { title?: string; description?: string; settings?: SiteSettings; admin?: boolean }
+const { settings = siteSettingsSchema.parse({}), title = settings.seoTitle, description = settings.seoDescription, admin = false } = Astro.props;
+const base = settings.siteUrl || Astro.url.origin;
+const canonical = new URL(Astro.url.pathname, base).toString();
+const favicon = safeAsset(settings.favicon || '/images/brand-lockup-black.png');
+const shareImage = new URL('/images/brand-lockup-black.png', base).toString();
+const backgroundImage = /^\/media\/backgrounds\/[a-f0-9-]{36}\.(png|jpg|webp)$/.test(settings.backgroundValue) ? settings.backgroundValue : '';
+const backgroundColor = /^#[a-fA-F0-9]{6}$/.test(settings.backgroundValue) ? settings.backgroundValue : '';
+const background = settings.backgroundType === 'image' && backgroundImage ? `url('${backgroundImage}')` : settings.backgroundType === 'color' && backgroundColor ? `linear-gradient(${backgroundColor},${backgroundColor})` : '';
+const wallpaperMode = background ? settings.backgroundType : 'default';
+const glassBackground = background || "url('/images/glass-wallpaper.svg')";
+const backgroundStyle = [`--background-blur:${settings.backgroundBlur}px`,`--background-brightness:${settings.backgroundBrightness}`,`--background-overlay:${settings.backgroundOverlay}`,`--background-position:${settings.backgroundPosition}`,`--background-size:${settings.backgroundSize}`,`--custom-background:${glassBackground}`].join(';');
+---
+<!doctype html>
+<html lang="zh-CN" data-default-theme={settings.defaultTheme} data-wallpaper={wallpaperMode}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <meta name="theme-color" content="#f6f7f8" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={shareImage} />
+    <meta property="og:url" content={canonical} />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:image" content={shareImage} />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" href={favicon} />
+    {admin && <meta name="robots" content="noindex,nofollow" />}
+    <title>{title}</title>
+    <script is:inline>
+      try {
+        const root = document.documentElement;
+        const saved = localStorage.getItem('nav-theme');
+        const theme = ['light','dark','glass'].includes(saved) ? saved : root.dataset.defaultTheme;
+        root.dataset.theme = theme === 'glass' && localStorage.getItem('nav-glass-consent') !== 'yes' ? 'light' : theme;
+      } catch { document.documentElement.dataset.theme = document.documentElement.dataset.defaultTheme; }
+    </script>
+  </head>
+  <body style={backgroundStyle} data-glass-wallpaper={settings.backgroundType === 'color' && backgroundColor ? backgroundColor : backgroundImage && settings.backgroundType === 'image' ? backgroundImage : '/images/glass-wallpaper.svg'}>
+    <slot />
+  </body>
+</html>

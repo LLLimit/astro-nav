@@ -1,0 +1,456 @@
+.login-wrap {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: #f1f5f2;
+}
+.login-card {
+  width: min(400px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  background: #fff;
+  padding: 33px;
+  border: 1px solid #dae3df;
+  border-radius: 17px;
+  box-shadow: 0 20px 55px #24403315;
+}
+.login-card h1 {
+  margin: 0;
+  font-size: 25px;
+}
+.login-card p {
+  margin: 0;
+  color: #687773;
+}
+.login-card label,
+.form-stack label,
+.settings-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.login-card input,
+.form-stack input,
+.form-stack select,
+.form-stack textarea,
+.settings-grid input,
+.settings-grid select,
+.settings-grid textarea,
+.toolbar input,
+.toolbar select {
+  width: 100%;
+  border: 1px solid #d5dfdb;
+  border-radius: 8px;
+  padding: 9px 11px;
+  background: #fff;
+  color: #20302c;
+  outline-color: #5e8a79;
+}
+.login-card button,
+.primary {
+  border: 0;
+  background: #315b50;
+  color: #fff;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-weight: 600;
+}
+.login-card small {
+  color: #b44646;
+}
+.admin-shell {
+  min-height: 100vh;
+  display: flex;
+  background: #f5f7f6;
+  color: #1f2d2a;
+}
+.admin-side {
+  width: 226px;
+  flex: none;
+  background: #fff;
+  border-right: 1px solid #e1e9e5;
+  padding: 18px 13px;
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+}
+.admin-brand {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 12px 8px 25px;
+}
+.admin-brand strong {
+  font-size: 15px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.admin-brand small {
+  font-size: 10px;
+  color: #7a8a84;
+}
+.admin-side nav {
+  display: grid;
+  gap: 4px;
+}
+.admin-side nav button,
+.logout {
+  border: 0;
+  background: transparent;
+  text-align: left;
+  color: #5c6c65;
+  padding: 11px 13px;
+  border-radius: 8px;
+}
+.admin-side nav button:hover,
+.admin-side nav .selected {
+  background: #eaf1ed;
+  color: #254d40;
+}
+.logout {
+  margin-top: auto;
+}
+.admin-main {
+  min-width: 0;
+  flex: 1;
+  padding: 0 clamp(18px, 3vw, 45px) 50px;
+}
+.admin-top {
+  height: 65px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  border-bottom: 1px solid #dfe7e3;
+  margin-bottom: 30px;
+}
+.admin-top span {
+  font-weight: 700;
+}
+.admin-top a {
+  margin-left: auto;
+  color: #467366;
+  font-size: 13px;
+}
+.admin-top button {
+  display: none;
+}
+.admin-main h1 {
+  margin: 0;
+  font-size: 28px;
+}
+.admin-main h2 {
+  font-size: 17px;
+  margin: 0 0 15px;
+}
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+.panel-head p {
+  margin: 5px 0 0;
+  color: #78867f;
+  font-size: 13px;
+}
+.panel {
+  background: #fff;
+  border: 1px solid #e0e8e3;
+  border-radius: 13px;
+  padding: 20px;
+  margin-bottom: 18px;
+}
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 13px;
+  margin-bottom: 18px;
+}
+.summary-card {
+  background: #fff;
+  border: 1px solid #e0e8e3;
+  border-radius: 12px;
+  padding: 17px;
+}
+.summary-card small {
+  display: block;
+  color: #74837d;
+}
+.summary-card strong {
+  font-size: 28px;
+}
+.admin-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(250px, 1fr);
+  gap: 17px;
+}
+.stats-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.chart {
+  height: 300px;
+}
+.chart.small {
+  height: 250px;
+}
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+.toolbar > input {
+  max-width: 260px;
+}
+.toolbar select {
+  max-width: 170px;
+}
+.toolbar button,
+.pagination button,
+.admin-row button,
+#parse-site {
+  border: 1px solid #d4dfd9;
+  background: #fff;
+  color: #35574a;
+  border-radius: 7px;
+  padding: 8px 11px;
+}
+.toolbar .danger,
+.admin-row .danger {
+  color: #a44343;
+  border-color: #ebd0d0;
+}
+.checkline {
+  display: flex !important;
+  align-items: center;
+  flex-direction: row !important;
+  gap: 6px !important;
+  white-space: nowrap;
+}
+.checkline input {
+  width: auto !important;
+}
+.admin-list {
+  display: grid;
+  gap: 9px;
+  margin: 10px 0 20px;
+}
+.admin-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: #fff;
+  padding: 13px;
+  border: 1px solid #e0e8e3;
+  border-radius: 10px;
+}
+.admin-row img {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  border-radius: 7px;
+}
+.admin-row .row-main {
+  flex: 1;
+  min-width: 0;
+}
+.admin-row strong {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.admin-row small {
+  display: block;
+  color: #7c8983;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.admin-row .row-actions {
+  display: flex;
+  gap: 7px;
+}
+.badge {
+  display: inline-block;
+  font-size: 11px;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: #edf3ef;
+  color: #527866;
+}
+.badge.off {
+  background: #f2eeee;
+  color: #997171;
+}
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 14px;
+}
+.form-stack {
+  display: grid;
+  gap: 15px;
+}
+.form-stack textarea,
+.settings-grid textarea {
+  min-height: 75px;
+  resize: vertical;
+}
+.form-stack.narrow {
+  max-width: 480px;
+}
+.settings-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 17px;
+}
+.wallpaper-preview { grid-column:1/-1; min-height:150px; display:grid; place-items:center; overflow:hidden; border:1px solid #dce5df; border-radius:14px; background:#f5f6f4; background-size:cover; background-position:center; color:#183342; }
+.wallpaper-preview[data-theme="dark"] { background-color:#191f22; color:#f2f5f4; }
+.wallpaper-preview span { padding:9px 16px; border:1px solid #fff9; border-radius:12px; background:#ffffff69; box-shadow:0 8px 26px #17385125; backdrop-filter:blur(14px) saturate(1.6); font-weight:700; }
+.wallpaper-help { grid-column:1/-1; margin:-8px 0 0; color:#64756e; font-size:13px; }
+.settings-grid > button {
+  justify-self: start;
+}
+.check-group {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  align-items: center;
+  grid-column: 1/-1;
+}
+.check-group label {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center;
+  gap: 5px;
+}
+.check-group input {
+  width: auto !important;
+}
+.upload-row {
+  grid-column: 1/-1;
+  display: flex;
+  gap: 13px;
+  flex-wrap: wrap;
+}
+.upload-row input {
+  max-width: 220px;
+}
+.settings-grid textarea {
+  min-height: 70px;
+}
+#admin-message {
+  position: fixed;
+  right: 20px;
+  top: 70px;
+  z-index: 100;
+  background: #315b50;
+  color: #fff;
+  padding: 10px 14px;
+  border-radius: 8px;
+  display: none;
+}
+#admin-message.error {
+  background: #a34444;
+}
+#edit-dialog {
+  width: min(550px, 94vw);
+  max-height: 90vh;
+  overflow: auto;
+  border: 1px solid #dae5df;
+  border-radius: 14px;
+  padding: 24px;
+  box-shadow: 0 26px 70px #172d2940;
+}
+#edit-dialog::backdrop {
+  background: #13241eb0;
+}
+.dialog-head {
+  display: flex;
+  justify-content: space-between;
+}
+.dialog-head button {
+  border: 0;
+  background: none;
+  font-size: 26px;
+}
+.dialog-head h2 {
+  margin: 0;
+}
+.import-status {
+  font-size: 12px;
+  color: #4d7864;
+}
+.import-status.error {
+  color: #b24545;
+}
+.upload-row label {
+  font-weight: 600;
+}
+.admin-main a:hover {
+  text-decoration: underline;
+}
+@media (max-width: 850px) {
+  .admin-side {
+    position: fixed;
+    z-index: 50;
+    transform: translateX(-100%);
+    transition: transform 0.2s;
+    box-shadow: 0 10px 30px #0002;
+  }
+  .admin-side.open {
+    transform: translateX(0);
+  }
+  .admin-top button {
+    display: block;
+    border: 0;
+    background: none;
+    font-size: 20px;
+  }
+  .admin-main {
+    padding-inline: 16px;
+  }
+  .admin-grid,
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  .settings-grid {
+    grid-template-columns: 1fr;
+  }
+  .admin-row {
+    flex-wrap: wrap;
+  }
+  .admin-row .row-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+  .admin-row small {
+    max-width: 240px;
+  }
+}
+@media (max-width: 520px) {
+  .summary-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .panel-head {
+    align-items: flex-start;
+  }
+  .toolbar > input {
+    max-width: none;
+  }
+  .admin-row img {
+    width: 28px;
+    height: 28px;
+  }
+}

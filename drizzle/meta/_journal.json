@@ -1,0 +1,34 @@
+{
+  "version": "7",
+  "dialect": "mysql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1790432196180,
+      "tag": "0000_broad_mach_iv",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1790432485021,
+      "tag": "0001_solid_puff_adder",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1791141885271,
+      "tag": "0002_stiff_the_renegades",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1791208488893,
+      "tag": "0003_nonnegative-sort",
+      "breakpoints": true
+    }
+  ]
+}
