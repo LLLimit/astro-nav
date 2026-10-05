@@ -1,6 +1,6 @@
-# astro-nav · 自托管导航站
+# astro-nav · Astro 全栈导航站
 
-基于 [astro-xwnav](https://github.com/zywe03/astro-xwnav) 重构的 Astro 全栈导航站。保留了原项目的 Astro 架构、分类卡片、图标资源和快捷搜索思路，改为 MySQL 驱动，内容更新无需重新构建。
+基于 Astro 开发的全栈导航站，包含完整的管理后台，使用 MySQL 存储网站内容与访问统计。支持分类导航、快捷搜索、自定义图标和多种主题，内容可在后台实时管理，更新无需重新构建。
 
 项目仓库：[LLLimit/astro-nav](https://github.com/LLLimit/astro-nav)。
 
@@ -40,7 +40,7 @@ Astro 5、TypeScript、Tailwind CSS、Astro Node Adapter、Drizzle ORM、MySQL 8
    pnpm dev
    ```
 
-4. 浏览 `/admin`。当管理员表为空时，首次登录会使用环境变量创建账号并保存 Argon2id 哈希；以后不会重设密码。旧数据导入是幂等的，可重复运行，已有网址按规范化 URL 跳过。
+4. 浏览 `/admin`。当管理员表为空时，首次登录会使用环境变量创建账号并保存 Argon2id 哈希；以后不会重设密码。`pnpm db:import-legacy` 用于导入示例导航数据，可按需执行；重复运行时会跳过已有网址。
 
 `pnpm db:generate` 用于开发新 Schema 迁移；部署已有版本时运行 `pnpm db:migrate`，不要用数据库重置或 `push` 代替迁移。上传数据保存在项目根目录 `data/icons`、`data/logos`、`data/backgrounds`，构建不会清理该目录。
 
@@ -122,4 +122,4 @@ pnpm build
 - **上传文件消失**：确认 `data/` 使用持久存储，升级时没有删除该目录。
 - **点击数未增加**：五分钟内同一 IP Hash 对同一网站只计一次；检查 `IP_HASH_SECRET` 和代理信任设置。
 
-原项目采用 MIT 许可证。原始版权和许可见 [LICENSE](LICENSE)。
+本项目采用 MIT 许可证，版权和许可条款见 [LICENSE](LICENSE)。
