@@ -50,7 +50,7 @@ async function safeFetch(input: string, maxBytes: number) {
         redirect: "manual",
         signal: AbortSignal.timeout(8000),
         headers: {
-          "user-agent": "DarkNav/1.0 (+metadata parser)",
+          "user-agent": "astro-nav/1.0 (+metadata parser)",
           accept: "text/html,image/*;q=0.8,*/*;q=0.1",
         },
       });

@@ -1,8 +1,12 @@
 {
-  "name": "astro-xwnav",
+  "name": "astro-nav",
   "type": "module",
   "version": "1.0.0",
   "description": "Self-hosted MySQL navigation platform based on astro-xwnav",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LLLimit/astro-nav.git"
+  },
   "keywords": [
     "astro",
     "navigation",

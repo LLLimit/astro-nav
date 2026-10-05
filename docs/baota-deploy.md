@@ -1,23 +1,23 @@
-# 宝塔 Linux 面板部署 DarkNav
+# 宝塔 Linux 面板部署 astro-nav
 
-以下以域名 `nav.example.com`、项目目录 `/www/wwwroot/darknav` 和本机 MySQL 为例。把示例值换成自己的域名、数据库账号和密钥。
+以下以域名 `nav.example.com`、项目目录 `/www/wwwroot/astro-nav` 和本机 MySQL 为例。把示例值换成自己的域名、数据库账号和密钥。
 
 ## 1. 安装环境并上传项目
 
 在宝塔安装 Nginx、MySQL 8 和 Node.js 版本管理器，安装 Node.js 22.12 或更高版本，并把它设为 Node 项目的命令行版本。域名先解析到服务器。
 
-上传**当前修改后的** `astro-xwnav-main` 项目到 `/www/wwwroot/darknav`。上传 `src/`、`public/`、`drizzle/`、`scripts/`、`package.json`、`pnpm-lock.yaml`、配置文件等源码；不要上传 Windows 上的 `node_modules/`、`dist/` 或本地 `.env`。依赖和构建产物要在 Linux 服务器上生成。如果要迁移已经上传的图标或壁纸，同时复制项目的 `data/` 目录。
+上传**当前修改后的** `astro-nav` 项目到 `/www/wwwroot/astro-nav`。上传 `src/`、`public/`、`drizzle/`、`scripts/`、`package.json`、`pnpm-lock.yaml`、配置文件等源码；不要上传 Windows 上的 `node_modules/`、`dist/` 或本地 `.env`。依赖和构建产物要在 Linux 服务器上生成。如果要迁移已经上传的图标或壁纸，同时复制项目的 `data/` 目录。
 
 ## 2. 在宝塔一键建库
 
-打开 **数据库 → MySQL → 添加数据库**，填写数据库名（例如 `darknav`）、专用用户名和随机强密码，字符集选 `utf8mb4`，访问权限选**本地服务器**，然后确定。宝塔会创建数据库和用户；这个项目不需要手工导入建表 SQL。数据库表在第 4 步用迁移命令创建。
+打开 **数据库 → MySQL → 添加数据库**，填写数据库名（例如 `astro-nav`）、专用用户名和随机强密码，字符集选 `utf8mb4`，访问权限选**本地服务器**，然后确定。宝塔会创建数据库和用户；这个项目不需要手工导入建表 SQL。数据库表在第 4 步用迁移命令创建。
 
 ## 3. 配置环境变量
 
 在服务器项目根目录复制 `.env.example` 为 `.env`，填入真实值。至少配置：
 
 ```dotenv
-DATABASE_URL=mysql://darknav:你的数据库密码@127.0.0.1:3306/darknav
+DATABASE_URL=mysql://astro-nav:你的数据库密码@127.0.0.1:3306/astro-nav
 SITE_URL=https://nav.example.com
 SITE_TIMEZONE=Asia/Hong_Kong
 ADMIN_USERNAME=admin
@@ -37,7 +37,7 @@ PORT=3000
 在宝塔终端进入项目目录，安装依赖、迁移数据库、构建：
 
 ```bash
-cd /www/wwwroot/darknav
+cd /www/wwwroot/astro-nav
 npm install -g pnpm
 pnpm install --frozen-lockfile
 pnpm db:migrate
@@ -48,7 +48,7 @@ pnpm build
 
 ## 5. 用宝塔运行和绑定域名
 
-在 **网站 → Node 项目 → 添加 Node 项目** 填写项目路径 `/www/wwwroot/darknav`、Node 版本、端口 `3000`。如果面板要求启动文件，填 `scripts/start.mjs`；如果要求启动命令，填 `pnpm start`。宝塔的 Node 项目管理会用 PM2 守护进程。
+在 **网站 → Node 项目 → 添加 Node 项目** 填写项目路径 `/www/wwwroot/astro-nav`、Node 版本、端口 `3000`。如果面板要求启动文件，填 `scripts/start.mjs`；如果要求启动命令，填 `pnpm start`。宝塔的 Node 项目管理会用 PM2 守护进程。
 
 给域名配置 HTTPS，并将站点反向代理到 `http://127.0.0.1:3000`。不要在防火墙公开 3000 端口。若通过 Nginx 站点设置添加代理，确保转发原始 `Host` 和协议。上传壁纸上限为 5 MB；Nginx 的请求体上限至少设为 `6m`，否则上传时可能出现 413。
 

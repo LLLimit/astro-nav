@@ -1,6 +1,8 @@
-# DarkNav · 自托管导航站
+# astro-nav · 自托管导航站
 
 基于 [astro-xwnav](https://github.com/zywe03/astro-xwnav) 重构的 Astro 全栈导航站。保留了原项目的 Astro 架构、分类卡片、图标资源和快捷搜索思路，改为 MySQL 驱动，内容更新无需重新构建。
+
+项目仓库：[LLLimit/astro-nav](https://github.com/LLLimit/astro-nav)。
 
 ## 功能
 
