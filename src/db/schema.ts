@@ -10,6 +10,7 @@ import {
   uniqueIndex,
   primaryKey,
   json,
+  type AnyMySqlColumn,
 } from "drizzle-orm/mysql-core";
 
 export const admins = mysqlTable(
@@ -27,6 +28,7 @@ export const categories = mysqlTable(
   "categories",
   {
     id: int("id").autoincrement().primaryKey(),
+    parentId: int("parent_id").references((): AnyMySqlColumn => categories.id),
     name: varchar("name", { length: 100 }).notNull(),
     slug: varchar("slug", { length: 120 }).notNull(),
     icon: varchar("icon", { length: 512 }),
@@ -39,6 +41,7 @@ export const categories = mysqlTable(
   (t) => [
     uniqueIndex("categories_slug_uq").on(t.slug),
     index("categories_order_idx").on(t.sortOrder),
+    index("categories_parent_order_idx").on(t.parentId, t.sortOrder),
   ],
 );
 

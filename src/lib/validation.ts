@@ -35,6 +35,10 @@ export const siteInput = z.object({
 });
 
 export const categoryInput = z.object({
+  parentId: z.preprocess(
+    (value) => value === "" || value == null ? null : value,
+    z.coerce.number().int().positive().nullable(),
+  ),
   name: z.string().trim().min(1).max(100),
   slug: z
     .string()

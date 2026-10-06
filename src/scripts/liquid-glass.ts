@@ -100,7 +100,7 @@ void main() {
 
 // Nested controls are drawn after their parent. Popovers keep CSS backdrop blur
 // as well, so text/content behind an overlay is diffused rather than duplicated.
-const surfaceSelector = ".sidebar,.search-shell,.site-card,.theme-toggle,.search-submit,.back-to-top,.search-results,.site-preview";
+const surfaceSelector = ".category-section,.subcategory-tab,.sidebar,.search-shell,.site-card,.theme-toggle,.search-submit,.back-to-top,.search-results,.site-preview";
 type Surface = { element: HTMLElement; radius: number; bezel: number; depth: number; tint: number };
 export type GlassRenderer = { destroy: () => void };
 
@@ -240,12 +240,14 @@ export async function createLiquidGlass(isCurrent = () => document.documentEleme
       for (const element of document.querySelectorAll<HTMLElement>(surfaceSelector)) {
         if (surfaces.has(element)) continue;
         const style = getComputedStyle(element);
-        const compact = element.matches(".theme-toggle,.search-submit,.back-to-top");
+        const tab = element.matches(".subcategory-tab");
+        const panel = element.matches(".category-section");
+        const compact = tab || element.matches(".theme-toggle,.search-submit,.back-to-top");
         const radius = style.borderTopLeftRadius;
         surfaces.set(element, {
           element, radius: radius.includes("%") ? -1 : parseFloat(radius) || 14,
-          bezel: compact ? 12 : 19, depth: compact ? 25 : 34,
-          tint: element.matches(".search-results,.site-preview") ? 0.34 : element.matches(".search-submit") ? 0.26 : 0.14,
+          bezel: tab ? 8 : compact ? 12 : 19, depth: tab ? 20 : compact || panel ? 25 : 34,
+          tint: element.matches(".search-results,.site-preview") ? 0.34 : element.matches(".search-submit") ? 0.26 : panel ? 0.18 : 0.14,
         });
         element.classList.add("liquid-surface");
         intersection!.observe(element);
@@ -293,16 +295,22 @@ export async function createLiquidGlass(isCurrent = () => document.documentEleme
       const lenses = [...visible].flatMap((element) => {
         const surface = surfaces.get(element);
         if (!surface || element.hidden || element.closest("[hidden]") || element.matches(".back-to-top:not(.visible)")) return [];
+        if (element.matches(".subcategory-tab") && !element.matches(".active,:hover,:focus-visible")) return [];
         const rect = element.getBoundingClientRect();
         return rect.width && rect.height && rect.bottom > 0 && rect.top < height ? [{ surface, rect }] : [];
       });
       // Parent panels first, floating controls and popovers last.
-      lenses.sort((a, b) => Number(a.surface.element.matches(".theme-toggle,.search-submit,.back-to-top,.search-results,.site-preview")) - Number(b.surface.element.matches(".theme-toggle,.search-submit,.back-to-top,.search-results,.site-preview")));
+      const layer = (element: HTMLElement) => element.matches(".category-section") ? 0
+        : element.matches(".search-results,.site-preview") ? 3
+        : element.matches(".subcategory-tab,.theme-toggle,.search-submit,.back-to-top") ? 2 : 1;
+      lenses.sort((a, b) => layer(a.surface.element) - layer(b.surface.element));
       for (const { surface, rect } of lenses) {
-        const left = Math.max(0, Math.floor(rect.left * dpr));
-        const bottom = Math.max(0, Math.floor((height - rect.bottom) * dpr));
-        const right = Math.min(canvas.width, Math.ceil(rect.right * dpr));
-        const top = Math.min(canvas.height, Math.ceil((height - rect.top) * dpr));
+        // Horizontal tab scrolling clips the optical layer as well as its DOM label.
+        const clip = surface.element.closest(".subcategory-tabs")?.getBoundingClientRect();
+        const left = Math.max(0, Math.floor(Math.max(rect.left, clip?.left ?? rect.left) * dpr));
+        const bottom = Math.max(0, Math.floor((height - Math.min(rect.bottom, clip?.bottom ?? rect.bottom)) * dpr));
+        const right = Math.min(canvas.width, Math.ceil(Math.min(rect.right, clip?.right ?? rect.right) * dpr));
+        const top = Math.min(canvas.height, Math.ceil((height - Math.max(rect.top, clip?.top ?? rect.top)) * dpr));
         if (right <= left || top <= bottom) continue;
         gl!.scissor(left, bottom, right - left, top - bottom);
         gl!.uniform4f(uniform.uRect, rect.left, rect.top, rect.width, rect.height);
@@ -358,6 +366,10 @@ export async function createLiquidGlass(isCurrent = () => document.documentEleme
       lastScroll = window.scrollY;
       wake();
     }, eventOptions);
+    // Scroll inside a category's tab bar does not fire a window scroll event.
+    document.addEventListener("scroll", () => wake(), { ...eventOptions, capture: true });
+    document.addEventListener("focusin", () => wake(), { signal: abort.signal });
+    document.addEventListener("focusout", () => wake(), { signal: abort.signal });
     window.addEventListener("resize", resize, eventOptions);
     document.addEventListener("visibilitychange", () => {
       if (document.hidden) { cancelAnimationFrame(frame); frame = 0; lastTime = 0; }

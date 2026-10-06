@@ -83,3 +83,10 @@
 .chart { color:#171717; }
 @media(max-width:850px) { .admin-side { box-shadow:0 18px 55px rgba(0,0,0,.35); } .admin-main { padding-inline:18px; } }
 @media(max-width:520px) { .login-card { padding:26px; } .admin-top { height:65px; margin-bottom:24px; } .panel { padding:17px; } }
+.category-root { background:#fafafa; margin-top:8px; }
+.category-root .row-main strong { font-size:15px; }
+.category-child { margin-left:30px; position:relative; }
+.category-child::before { content:""; position:absolute; top:50%; left:-18px; width:11px; height:1px; background:#c9c9ce; }
+.category-row .row-actions { flex-wrap:wrap; justify-content:flex-end; }
+.category-manage-help { color:#6e6e73; font-size:13px; }
+@media(max-width:620px) { .category-child { margin-left:18px; } .category-child::before { left:-12px; width:7px; } .category-row .row-actions { flex-basis:100%; justify-content:flex-start; } }

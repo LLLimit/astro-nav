@@ -2,6 +2,7 @@ export {};
 import type { EChartsOption } from "echarts";
 type Category = {
   id: number;
+  parentId: number | null;
   name: string;
   slug: string;
   icon: string | null;
@@ -145,22 +146,53 @@ async function loadCategories() {
   const filters = [
     $<HTMLSelectElement>("#site-category-filter"),
     $<HTMLSelectElement>("#import-category"),
-    getInput(
-      $<HTMLFormElement>("#edit-form")!,
-      "categoryId",
-    ) as HTMLSelectElement,
   ];
   for (const select of filters) {
     if (!select) continue;
-    const initial =
-      select.id === "site-category-filter"
-        ? '<option value="">全部分类</option>'
-        : "";
-    select.innerHTML = initial;
-    for (const category of categories)
-      select.add(new Option(category.name, String(category.id)));
+    const previous = select.value;
+    fillCategoryOptions(select, select.id === "site-category-filter");
+    if ([...select.options].some((option) => option.value === previous)) select.value = previous;
+  }
+  const form = $<HTMLFormElement>("#edit-form")!;
+  const rootSelect = getInput(form, "mainCategoryId") as HTMLSelectElement;
+  const previousRoot = rootSelect.value;
+  rootSelect.replaceChildren();
+  for (const category of categories.filter((c) => c.parentId === null))
+    rootSelect.add(new Option(category.name, String(category.id)));
+  if ([...rootSelect.options].some((option) => option.value === previousRoot)) rootSelect.value = previousRoot;
+  syncSiteCategoryOptions(Number(rootSelect.value));
+}
+function categoryPath(category: Category) {
+  const parent = categories.find((c) => c.id === category.parentId);
+  return parent ? `${parent.name} / ${category.name}` : category.name;
+}
+function fillCategoryOptions(select: HTMLSelectElement, includeAll = false) {
+  select.replaceChildren();
+  if (includeAll) select.add(new Option("全部分类", ""));
+  for (const root of categories.filter((c) => c.parentId === null)) {
+    const group = el("optgroup");
+    group.label = root.name + (root.visible ? "" : "（隐藏）");
+    group.append(new Option(includeAll ? `${root.name}（含二级分类）` : `${root.name}（不细分）`, String(root.id)));
+    for (const child of categories.filter((c) => c.parentId === root.id))
+      group.append(new Option(`↳ ${child.name}${child.visible && root.visible ? "" : "（隐藏）"}`, String(child.id)));
+    select.append(group);
   }
 }
+function syncSiteCategoryOptions(rootId: number, selectedId = rootId) {
+  const form = $<HTMLFormElement>("#edit-form");
+  if (!form) return;
+  const select = getInput(form, "categoryId") as HTMLSelectElement;
+  select.replaceChildren();
+  if (!rootId) return;
+  select.add(new Option("不细分，直接放入一级分类", String(rootId)));
+  for (const child of categories.filter((c) => c.parentId === rootId))
+    select.add(new Option(child.name + (child.visible ? "" : "（隐藏）"), String(child.id)));
+  select.value = String(selectedId);
+  if (!select.value) select.value = String(rootId);
+}
+$("#site-main-category")?.addEventListener("change", (event) =>
+  syncSiteCategoryOptions(Number((event.target as HTMLSelectElement).value)),
+);
 function showView(name: string) {
   if (
     ![
@@ -219,8 +251,10 @@ function renderCategories() {
   const list = $("#category-list");
   if (!list) return;
   list.replaceChildren();
-  for (const category of categories) {
-    const row = el("div", "admin-row");
+  if (!categories.length) list.append(el("p", "category-manage-help", "暂无分类，先添加一个一级分类。"));
+  const ordered = categories.filter((c) => c.parentId === null).flatMap((root) => [root, ...categories.filter((c) => c.parentId === root.id)]);
+  for (const category of ordered) {
+    const row = el("div", `admin-row category-row${category.parentId === null ? " category-root" : " category-child"}`);
     const icon = el("img");
     icon.src = category.icon || "/images/default.svg";
     icon.alt = "";
@@ -230,20 +264,26 @@ function renderCategories() {
       el(
         "small",
         "",
-        `排序 ${category.sortOrder} · ${category.visible ? "显示" : "隐藏"}`,
+        `${category.parentId === null ? "一级分类" : "二级分类"} · 排序 ${category.sortOrder} · ${!category.visible ? "隐藏" : category.parentId && !categories.find((c) => c.id === category.parentId)?.visible ? "随一级分类隐藏" : "显示"}`,
       ),
     );
     const actions = el("div", "row-actions");
+    if (category.parentId === null)
+      actions.append(button("添加二级分类", () => openCategory(undefined, category.id)));
     actions.append(
       button("编辑", () => openCategory(category)),
       button(
         "删除",
         async () => {
+          if (categories.some((c) => c.parentId === category.id)) {
+            message("此一级分类包含二级分类，请先移动或删除二级分类", true);
+            return;
+          }
           const moveTo = prompt(
             "输入目标分类 ID 转移网站；输入 DELETE 一并删除网站；空白仅删除空分类。可选：" +
               categories
                 .filter((c) => c.id !== category.id)
-                .map((c) => c.name + "=" + c.id)
+                .map((c) => categoryPath(c) + "=" + c.id)
                 .join("、"),
           );
           if (moveTo === null) return;
@@ -292,7 +332,7 @@ function toggleFields(kind: "site" | "category") {
   >("#category-fields input,#category-fields select,#category-fields textarea"))
     control.disabled = kind !== "category";
 }
-function openCategory(category?: Category) {
+function openCategory(category?: Category, parentId: number | null = null) {
   editKind = "category";
   toggleFields("category");
   editId = category?.id ?? null;
@@ -301,7 +341,18 @@ function openCategory(category?: Category) {
   $("#site-fields")?.setAttribute("hidden", "");
   $("#category-fields")?.removeAttribute("hidden");
   const heading = $("#edit-heading");
-  if (heading) heading.textContent = category ? "编辑分类" : "添加分类";
+  if (heading) heading.textContent = category ? "编辑分类" : parentId ? "添加二级分类" : "添加一级分类";
+  const parentSelect = getInput(form, "parentId") as HTMLSelectElement;
+  parentSelect.replaceChildren(new Option("无上级，作为一级分类", ""));
+  for (const root of categories.filter((c) => c.parentId === null && c.id !== editId))
+    parentSelect.add(new Option(root.name, String(root.id)));
+  parentSelect.value = String(category?.parentId ?? parentId ?? "");
+  const hasChildren = Boolean(category && categories.some((c) => c.parentId === category.id));
+  parentSelect.disabled = hasChildren;
+  const parentHelp = $("#category-parent-help");
+  if (parentHelp) parentHelp.textContent = hasChildren
+    ? "此分类已有二级分类，先移动或删除二级分类后才能更改层级。"
+    : "选择一级分类后，作为其顶部标签显示；二级分类不进入侧边栏。";
   if (category) {
     for (const [key, value] of Object.entries({
       name: category.name,
@@ -362,7 +413,7 @@ function renderSites() {
       el(
         "small",
         "",
-        `${site.domain} · ${category.name} · ${siteTags[site.id]?.join(", ") || "无标签"} · ${site.clickCount} 次访问 · 排序 ${site.sortOrder} · ${site.featured ? "推荐 · " : ""}${site.pinned ? "置顶 · " : ""}${new Date(site.createdAt).toLocaleDateString()}`,
+        `${site.domain} · ${categoryPath(category)} · ${siteTags[site.id]?.join(", ") || "无标签"} · ${site.clickCount} 次访问 · 排序 ${site.sortOrder} · ${site.featured ? "推荐 · " : ""}${site.pinned ? "置顶 · " : ""}${new Date(site.createdAt).toLocaleDateString()}`,
       ),
     );
     const badge = el(
@@ -463,6 +514,10 @@ function openSite(site?: Site) {
   $("#site-fields")?.removeAttribute("hidden");
   const heading = $("#edit-heading");
   if (heading) heading.textContent = site ? "编辑网址" : "添加网址";
+  const assigned = categories.find((c) => c.id === site?.categoryId);
+  const rootId = assigned?.parentId ?? assigned?.id ?? categories.find((c) => c.parentId === null)?.id ?? 0;
+  setValue(form, "mainCategoryId", rootId);
+  syncSiteCategoryOptions(rootId, site?.categoryId);
   if (site) {
     for (const [key, value] of Object.entries({
       ...site,
@@ -495,6 +550,7 @@ $("#edit-form")?.addEventListener("submit", async (event) => {
     const existingSlug = editId ? categories.find((category) => category.id === editId)?.slug : undefined;
     const uniquePart = Array.from(crypto.getRandomValues(new Uint8Array(4)), (byte) => byte.toString(16).padStart(2, "0")).join("");
     const value = {
+      parentId: getInput(form, "parentId").value ? Number(getInput(form, "parentId").value) : null,
       name: getInput(form, "name").value,
       slug: existingSlug || `category-${Date.now().toString(36)}-${uniquePart}`,
       icon: getInput(form, "categoryIcon").value || null,

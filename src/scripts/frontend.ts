@@ -34,6 +34,46 @@ for (const card of cards) {
 }
 window.addEventListener("scroll", hideSitePreview, { passive: true });
 window.addEventListener("resize", hideSitePreview);
+for (const section of document.querySelectorAll<HTMLElement>(".category-section")) {
+  const buttons = [...section.querySelectorAll<HTMLButtonElement>("[data-subcategory]")];
+  const sectionCards = [...section.querySelectorAll<HTMLAnchorElement>(".site-card")];
+  const grid = section.querySelector<HTMLElement>(".site-grid");
+  const count = section.querySelector<HTMLElement>(".section-count");
+  const empty = section.querySelector<HTMLElement>("[data-category-empty]");
+  for (const [index, button] of buttons.entries()) {
+    button.addEventListener("click", () => {
+      if (button.getAttribute("aria-pressed") === "true") return;
+      hideSitePreview();
+      const selected = button.dataset.subcategory;
+      let visible = 0;
+      for (const card of sectionCards) {
+        card.hidden = selected !== "all" && card.dataset.subcategoryId !== selected;
+        if (!card.hidden) visible++;
+      }
+      for (const tab of buttons) {
+        const active = tab === button;
+        tab.classList.toggle("active", active);
+        tab.setAttribute("aria-pressed", String(active));
+      }
+      if (count) count.textContent = `${visible} 个网站`;
+      if (empty) empty.hidden = visible > 0;
+      if (grid && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        grid.classList.remove("category-switch");
+        void grid.offsetWidth;
+        grid.classList.add("category-switch");
+      }
+    });
+    button.addEventListener("keydown", (event) => {
+      const target = event.key === "ArrowRight" ? (index + 1) % buttons.length
+        : event.key === "ArrowLeft" ? (index - 1 + buttons.length) % buttons.length
+        : event.key === "Home" ? 0 : event.key === "End" ? buttons.length - 1 : -1;
+      if (target < 0) return;
+      event.preventDefault();
+      buttons[target].focus();
+      buttons[target].click();
+    });
+  }
+}
 const engines: Record<string, string> = {
   google: "https://www.google.com/search?q=",
   bing: "https://www.bing.com/search?q=",
@@ -348,24 +388,91 @@ collapse?.addEventListener("click", () => {
     localStorage.setItem("nav-sidebar-collapsed", String(collapsed));
   } catch {}
 });
-const sections = document.querySelectorAll<HTMLElement>(".category-section");
-const observer = new IntersectionObserver(
-  (entries) => {
-    for (const entry of entries)
-      if (entry.isIntersecting) {
-        document
-          .querySelectorAll(".side-link")
-          .forEach((link) =>
-            link.classList.toggle(
-              "active",
-              link.getAttribute("href") === `#${entry.target.id}`,
-            ),
-          );
-      }
-  },
-  { rootMargin: "-20% 0px -65% 0px" },
-);
-sections.forEach((section) => observer.observe(section));
+const sections = [...document.querySelectorAll<HTMLElement>(".category-section")];
+const categoryLinks = [...document.querySelectorAll<HTMLAnchorElement>(".side-link")];
+let requestedSection: HTMLElement | null = null;
+let categoryFrame = 0;
+let categoryLayoutTimer: ReturnType<typeof setTimeout> | undefined;
+
+function highlightCategory(section: HTMLElement) {
+  for (const link of categoryLinks) {
+    const selected = link.hash === `#${section.id}`;
+    link.classList.toggle("active", selected);
+    if (selected) link.setAttribute("aria-current", "location");
+    else link.removeAttribute("aria-current");
+  }
+}
+function updateCategoryPosition() {
+  categoryFrame = 0;
+  if (!sections.length) return;
+  // An anchor may stop at the document's scroll limit. Keep the clicked
+  // category selected even when later, shorter sections are also visible.
+  if (requestedSection) { highlightCategory(requestedSection); return; }
+  const marker = Math.min(100, window.innerHeight * 0.12);
+  let current = sections[0];
+  for (const section of sections) {
+    if (section.getBoundingClientRect().top > marker) break;
+    current = section;
+  }
+  if (window.scrollY > 0 && window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 2)
+    current = sections[sections.length - 1];
+  highlightCategory(current);
+}
+function scheduleCategoryPosition() {
+  if (!categoryFrame) categoryFrame = requestAnimationFrame(updateCategoryPosition);
+}
+function categoryFromHash() {
+  return sections.find((section) => `#${section.id}` === location.hash) ?? null;
+}
+function scrollToCategory(section: HTMLElement, behavior: ScrollBehavior) {
+  requestedSection = section;
+  highlightCategory(section);
+  section.scrollIntoView({ block: "start", behavior });
+}
+for (const link of categoryLinks) {
+  link.addEventListener("click", (event) => {
+    if (event.defaultPrevented || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+    const section = sections.find((item) => `#${item.id}` === link.hash);
+    if (!section) return;
+    event.preventDefault();
+    hideSitePreview();
+    if (location.hash !== link.hash) history.pushState(null, "", link.hash);
+    scrollToCategory(section, matchMedia("(prefers-reduced-motion:reduce)").matches ? "instant" : "smooth");
+  });
+}
+function releaseCategoryNavigation() {
+  requestedSection = null;
+  scheduleCategoryPosition();
+}
+window.addEventListener("wheel", releaseCategoryNavigation, { passive: true });
+window.addEventListener("touchmove", releaseCategoryNavigation, { passive: true });
+document.addEventListener("keydown", (event) => {
+  if ((event.target as Element)?.closest("input,textarea,select,[contenteditable],[data-subcategory]")) return;
+  if (["ArrowUp", "ArrowDown", "PageUp", "PageDown", "Home", "End", " "].includes(event.key)) releaseCategoryNavigation();
+});
+document.addEventListener("pointerdown", (event) => {
+  if (event.clientX >= document.documentElement.clientWidth) releaseCategoryNavigation();
+});
+window.addEventListener("scroll", scheduleCategoryPosition, { passive: true });
+window.addEventListener("hashchange", () => {
+  requestedSection = categoryFromHash();
+  categoryLayoutChanged();
+});
+// Fonts, collapsing the rail and changing child tabs can resize earlier panels.
+// Re-align after layout settles, rather than letting the old anchor drift.
+function categoryLayoutChanged() {
+  scheduleCategoryPosition();
+  if (categoryLayoutTimer) clearTimeout(categoryLayoutTimer);
+  categoryLayoutTimer = setTimeout(() => {
+    if (requestedSection) scrollToCategory(requestedSection, "instant");
+  }, 180);
+}
+const categoryResizeObserver = new ResizeObserver(categoryLayoutChanged);
+sections.forEach((section) => categoryResizeObserver.observe(section));
+window.addEventListener("resize", categoryLayoutChanged);
+document.fonts?.ready.then(categoryLayoutChanged);
+requestedSection = categoryFromHash();
+updateCategoryPosition();
 const backToTop = document.querySelector<HTMLButtonElement>("#back-to-top");
 window.addEventListener(
   "scroll",
@@ -374,11 +481,12 @@ window.addEventListener(
   },
   { passive: true },
 );
-backToTop?.addEventListener("click", () =>
+backToTop?.addEventListener("click", () => {
+  releaseCategoryNavigation();
   window.scrollTo({
     top: 0,
     behavior: matchMedia("(prefers-reduced-motion:reduce)").matches
       ? "auto"
       : "smooth",
-  }),
-);
+  });
+});

@@ -428,7 +428,7 @@ export const POST: APIRoute = async ({ params, request, cookies }) => {
         name: "分类名称", slug: "分类标识", siteUrl: "网站 URL", url: "网址",
         title: "名称", description: "描述", backgroundValue: "壁纸地址或颜色",
         defaultTheme: "默认主题", categoryId: "分类", newPassword: "新密码",
-        sortOrder: "排序",
+        sortOrder: "排序", parentId: "上级分类",
       };
       const issue = error.issues[0];
       const field = String(issue?.path.at(-1) || "输入内容");
@@ -441,6 +441,11 @@ export const POST: APIRoute = async ({ params, request, cookies }) => {
         "目标分类不能相同",
         "目标分类不存在",
         "分类不存在",
+        "上级分类不存在",
+        "只能添加两级分类，请选择一级分类作为上级",
+        "不能选择自己作为上级分类",
+        "此一级分类已有二级分类，不能改为二级分类",
+        "此一级分类包含二级分类，请先移动或删除二级分类",
       ].includes(error.message)
     )
       return fail(error.message);

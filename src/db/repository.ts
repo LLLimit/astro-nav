@@ -7,6 +7,7 @@ import {
   sql,
   like,
   or,
+  isNull,
   type SQL,
 } from "drizzle-orm";
 import { db } from "./client";
@@ -18,6 +19,7 @@ import {
   urlHash,
 } from "../lib/validation";
 import { z } from "zod";
+import { alias } from "drizzle-orm/mysql-core";
 
 export const siteSettingsSchema = z.object({
   name: z.string().min(1).max(100).default("LLLimit 导航站"),
@@ -72,18 +74,45 @@ export async function listCategories(includeHidden = false) {
     .select()
     .from(categories)
     .orderBy(asc(categories.sortOrder), asc(categories.id));
-  return includeHidden ? rows : rows.filter((row) => row.visible);
+  const visibleRoots = new Set(rows.filter((row) => row.visible && row.parentId === null).map((row) => row.id));
+  return includeHidden ? rows : rows.filter((row) => row.visible && (row.parentId === null || visibleRoots.has(row.parentId)));
+}
+
+function validateCategoryParent(
+  rows: { id: number; parentId: number | null }[],
+  parentId: number | null,
+  id?: number,
+) {
+  if (parentId === null) return;
+  if (parentId === id) throw new Error("不能选择自己作为上级分类");
+  const parent = rows.find((row) => row.id === parentId);
+  if (!parent) throw new Error("上级分类不存在");
+  if (parent.parentId !== null) throw new Error("只能添加两级分类，请选择一级分类作为上级");
+  if (id && rows.some((row) => row.parentId === id))
+    throw new Error("此一级分类已有二级分类，不能改为二级分类");
 }
 
 export async function createCategory(input: unknown) {
   const value = categoryInput.parse(input);
-  const result = await db().insert(categories).values(value);
-  return result[0].insertId;
+  return db().transaction(async (tx) => {
+    // Serialize hierarchy changes so concurrent edits cannot create a third level.
+    const rows = await tx.select({ id: categories.id, parentId: categories.parentId })
+      .from(categories).orderBy(asc(categories.id)).for("update");
+    validateCategoryParent(rows, value.parentId);
+    const result = await tx.insert(categories).values(value);
+    return result[0].insertId;
+  });
 }
 
 export async function updateCategory(id: number, input: unknown) {
   const value = categoryInput.parse(input);
-  await db().update(categories).set(value).where(eq(categories.id, id));
+  await db().transaction(async (tx) => {
+    const rows = await tx.select({ id: categories.id, parentId: categories.parentId })
+      .from(categories).orderBy(asc(categories.id)).for("update");
+    if (!rows.some((row) => row.id === id)) throw new Error("分类不存在");
+    validateCategoryParent(rows, value.parentId, id);
+    await tx.update(categories).set(value).where(eq(categories.id, id));
+  });
 }
 
 export async function removeCategory(
@@ -92,6 +121,11 @@ export async function removeCategory(
   deleteWithSites = false,
 ) {
   await db().transaction(async (tx) => {
+    const categoryRows = await tx.select({ id: categories.id, parentId: categories.parentId })
+      .from(categories).orderBy(asc(categories.id)).for("update");
+    if (!categoryRows.some((row) => row.id === id)) throw new Error("分类不存在");
+    if (categoryRows.some((row) => row.parentId === id))
+      throw new Error("此一级分类包含二级分类，请先移动或删除二级分类");
     const matching = await tx
       .select({ id: sites.id })
       .from(sites)
@@ -119,13 +153,15 @@ export async function removeCategory(
 }
 
 export async function listSites(onlyEnabled = false) {
+  const parent = alias(categories, "parent_categories");
   return db()
     .select({ site: sites, category: categories })
     .from(sites)
     .innerJoin(categories, eq(sites.categoryId, categories.id))
+    .leftJoin(parent, eq(categories.parentId, parent.id))
     .where(
       onlyEnabled
-        ? and(eq(sites.enabled, true), eq(categories.visible, true))
+        ? and(eq(sites.enabled, true), eq(categories.visible, true), or(isNull(categories.parentId), eq(parent.visible, true)))
         : undefined,
     )
     .orderBy(
@@ -155,7 +191,11 @@ export async function pageSites(options: {
       )!,
     );
   }
-  if (options.category) conditions.push(eq(sites.categoryId, options.category));
+  if (options.category) {
+    const children = await db().select({ id: categories.id }).from(categories)
+      .where(eq(categories.parentId, options.category));
+    conditions.push(inArray(sites.categoryId, [options.category, ...children.map((row) => row.id)]));
+  }
   if (options.status === "1" || options.status === "0")
     conditions.push(eq(sites.enabled, options.status === "1"));
   const filter = conditions.length ? and(...conditions) : undefined;

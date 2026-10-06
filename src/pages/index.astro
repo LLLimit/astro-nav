@@ -7,7 +7,8 @@ import { safeAsset } from '../lib/validation';
 import { getSettings, listCategories, listSites, listTagsBySite } from '../db/repository';
 const settings = await getSettings();
 const [categories, rows, tags] = await Promise.all([listCategories(), listSites(true), listTagsBySite()]);
-const categoryNav = categories.map(category => ({ ...category, count: rows.filter(row => row.site.categoryId === category.id).length }));
+const rootCategories = categories.filter(category => category.parentId === null);
+const categoryNav = rootCategories.map(category => ({ ...category, count: rows.filter(row => row.category.id === category.id || row.category.parentId === category.id).length }));
 ---
 <MainLayout settings={settings}>
   <div class="ambient" aria-hidden="true"></div>
@@ -17,13 +18,25 @@ const categoryNav = categories.map(category => ({ ...category, count: rows.filte
       <Sidebar categories={categoryNav} />
       <div class="category-content">
       {categories.length === 0 && <div class="empty-state">暂无分类，请管理员先导入或添加内容。</div>}
-      {categories.map(category => {
-        const items = rows.filter(row => row.site.categoryId === category.id);
-        return <section class="category-section" id={`category-${category.id}`}>
-          <div class="section-heading"><div class="section-title"><span class="section-icon">{category.icon ? <img src={safeAsset(category.icon)} alt="" width="21" height="21" /> : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>}</span><div><h2>{category.name}</h2>{category.description && <p>{category.description}</p>}</div></div><span class="section-count">{items.length} 个网站</span></div>
-          <div class={`site-grid ${settings.cardLayout === 'compact' ? 'compact' : ''}`}>
-            {items.map(({site}) => <Card id={site.id} title={site.title} description={site.description} shortDescription={site.shortDescription} url={site.url} domain={site.domain} icon={site.icon} fallbackIcon={category.icon} category={category.name} tags={tags[site.id] ?? []} clickCount={site.clickCount} showDescription={settings.showDescription} showClickCount={settings.showClickCount} />)}
+      {rootCategories.map(category => {
+        const children = categories.filter(child => child.parentId === category.id);
+        const items = rows.filter(row => row.category.id === category.id || row.category.parentId === category.id);
+        const directCount = items.filter(row => row.category.id === category.id).length;
+        return <section class="category-section" id={`category-${category.id}`} aria-labelledby={`category-title-${category.id}`}>
+          <div class="section-heading">
+            <div class="section-title"><span class="section-icon">{category.icon ? <img src={safeAsset(category.icon)} alt="" width="21" height="21" /> : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>}</span><h2 id={`category-title-${category.id}`}>{category.name}</h2></div>
+            {children.length > 0 && <div class="subcategory-tabs" role="group" aria-label={`${category.name}的二级分类`}>
+              <button class="subcategory-tab active" type="button" data-subcategory="all" aria-pressed="true" aria-controls={`category-grid-${category.id}`}>全部</button>
+              {children.map(child => <button class="subcategory-tab" type="button" data-subcategory={child.id} aria-pressed="false" aria-controls={`category-grid-${category.id}`}>{child.name}</button>)}
+              {directCount > 0 && <button class="subcategory-tab" type="button" data-subcategory="0" aria-pressed="false" aria-controls={`category-grid-${category.id}`}>未细分</button>}
+            </div>}
+            <span class="section-count" aria-live="polite" aria-atomic="true">{items.length} 个网站</span>
           </div>
+          {category.description && <p class="category-description">{category.description}</p>}
+          <div id={`category-grid-${category.id}`} class={`site-grid ${settings.cardLayout === 'compact' ? 'compact' : ''}`}>
+            {items.map(({site, category: assigned}) => <Card id={site.id} title={site.title} description={site.description} shortDescription={site.shortDescription} url={site.url} domain={site.domain} icon={site.icon} fallbackIcon={assigned.icon || category.icon} category={`${category.name} ${assigned.parentId === null ? '' : assigned.name}`} subcategoryId={assigned.parentId === null ? 0 : assigned.id} tags={tags[site.id] ?? []} clickCount={site.clickCount} showDescription={settings.showDescription} showClickCount={settings.showClickCount} />)}
+          </div>
+          <p class="category-empty" data-category-empty hidden={items.length > 0}>此分类暂无网站</p>
         </section>;
       })}
       </div>
