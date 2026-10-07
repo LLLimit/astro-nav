@@ -1,7 +1,7 @@
 {
   "name": "astro-nav",
   "type": "module",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "Full-stack Astro navigation website with a MySQL database and admin dashboard",
   "repository": {
     "type": "git",

@@ -316,6 +316,10 @@ document.addEventListener("click", (event) => {
 const themeToggle = document.querySelector<HTMLButtonElement>("#theme-toggle");
 const glassToggle = document.querySelector<HTMLButtonElement>("#glass-toggle");
 const glassConfirm = document.querySelector<HTMLDialogElement>("#glass-confirm");
+const wallpaperDialog = document.querySelector<HTMLDialogElement>("#wallpaper-dialog");
+const wallpaperStatus = document.querySelector<HTMLElement>("#wallpaper-status");
+const wallpaperOptions = [...document.querySelectorAll<HTMLButtonElement>(".wallpaper-option")];
+let wallpaperRequest = 0;
 type Theme = "light" | "dark" | "glass";
 const currentTheme = (): Theme => {
   const value = document.documentElement.dataset.theme;
@@ -331,12 +335,16 @@ function syncThemeButtons() {
   const next = current === "glass" ? lastSolidTheme : current === "light" ? "dark" : "light";
   themeToggle?.setAttribute("aria-label", `切换到${next === "dark" ? "深色" : "明亮"}主题`);
   if (themeToggle) themeToggle.title = `切换到${next === "dark" ? "深色" : "明亮"}主题`;
-  glassToggle?.setAttribute("aria-pressed", String(current === "glass"));
-  glassToggle?.setAttribute("aria-label", current === "glass" ? "关闭液态玻璃主题" : "启用液态玻璃主题");
-  if (glassToggle) glassToggle.title = current === "glass" ? "关闭液态玻璃主题" : "启用液态玻璃主题";
+  glassToggle?.setAttribute("aria-label", current === "glass" ? "选择壁纸" : "启用液态玻璃主题");
+  glassToggle?.setAttribute("aria-haspopup", "dialog");
+  glassToggle?.setAttribute("aria-controls", current === "glass" ? "wallpaper-dialog" : "glass-confirm");
+  if (glassToggle) glassToggle.title = current === "glass" ? "选择壁纸" : "启用液态玻璃主题";
 }
 function setTheme(next: Theme) {
   if (next !== "glass") {
+    wallpaperRequest++;
+    wallpaperDialog?.close();
+    if (wallpaperStatus) wallpaperStatus.textContent = "";
     lastSolidTheme = next;
     try { localStorage.setItem("nav-solid-theme", next); } catch {}
   }
@@ -354,7 +362,8 @@ themeToggle?.addEventListener("click", () => {
 });
 glassToggle?.addEventListener("click", () => {
   if (currentTheme() === "glass") {
-    setTheme(lastSolidTheme);
+    if (wallpaperStatus) wallpaperStatus.textContent = "";
+    wallpaperDialog?.showModal();
     return;
   }
   let consent = false;
@@ -383,7 +392,67 @@ async function syncGlassRenderer() {
 new MutationObserver(() => { void syncGlassRenderer(); }).observe(document.documentElement, {
   attributes: true, attributeFilter: ["data-theme"],
 });
-void syncGlassRenderer();
+function applyWallpaper(option: HTMLButtonElement) {
+  const value = option.dataset.wallpaperValue!;
+  const type = option.dataset.wallpaperType;
+  document.body.dataset.glassWallpaper = value;
+  document.body.style.setProperty("--custom-background", type === "color" ? `linear-gradient(${value},${value})` : `url("${value}")`);
+  document.documentElement.dataset.wallpaper = type;
+  for (const item of wallpaperOptions) item.setAttribute("aria-pressed", String(item === option));
+}
+async function chooseWallpaper(option: HTMLButtonElement, persist = true) {
+  const request = ++wallpaperRequest;
+  if (wallpaperStatus) wallpaperStatus.textContent = "正在加载壁纸…";
+  let timeout: ReturnType<typeof setTimeout> | undefined;
+  try {
+    if (option.dataset.wallpaperType === "image") {
+      const image = new Image();
+      image.src = option.dataset.wallpaperValue!;
+      await Promise.race([
+        image.decode(),
+        new Promise<never>((_, reject) => { timeout = setTimeout(() => reject(new Error("图片加载超时")), 15000); }),
+      ]);
+    }
+    if (request !== wallpaperRequest) return;
+    applyWallpaper(option);
+    if (persist) {
+      try { localStorage.setItem("nav-wallpaper", option.dataset.wallpaperId!); } catch {}
+    }
+    await syncGlassRenderer();
+    if (request === wallpaperRequest && wallpaperStatus) wallpaperStatus.textContent = `已选择「${option.querySelector(".wallpaper-option-name")?.textContent}」`;
+    return true;
+  } catch {
+    if (request !== wallpaperRequest) return;
+    if (wallpaperStatus) wallpaperStatus.textContent = "壁纸加载失败，请稍后重试或选择其他图片。";
+    return false;
+  } finally {
+    if (timeout) clearTimeout(timeout);
+  }
+}
+document.querySelector("#wallpaper-close")?.addEventListener("click", () => wallpaperDialog?.close());
+wallpaperDialog?.addEventListener("click", (event) => {
+  if (event.target !== wallpaperDialog) return;
+  const bounds = wallpaperDialog.getBoundingClientRect();
+  if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) wallpaperDialog.close();
+});
+for (const option of wallpaperOptions) option.addEventListener("click", () => { void chooseWallpaper(option); });
+async function restoreWallpaper() {
+  let saved: string | null = null;
+  try { saved = localStorage.getItem("nav-wallpaper"); } catch {}
+  const option = wallpaperOptions.find(item => item.dataset.wallpaperId === saved);
+  if (option && saved !== "default") {
+    const restored = await chooseWallpaper(option, false);
+    // Removed or unavailable wallpapers fall back to the website default.
+    if (restored === false) {
+      try { localStorage.removeItem("nav-wallpaper"); } catch {}
+      await syncGlassRenderer();
+    }
+  } else {
+    if (saved && saved !== "default") { try { localStorage.removeItem("nav-wallpaper"); } catch {} }
+    await syncGlassRenderer();
+  }
+}
+void restoreWallpaper();
 matchMedia("(prefers-reduced-transparency: reduce)").addEventListener("change", () => { void syncGlassRenderer(); });
 const collapse = document.querySelector<HTMLButtonElement>("#sidebar-collapse");
 const sidebar = document.querySelector<HTMLElement>("#sidebar");

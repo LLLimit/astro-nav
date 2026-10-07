@@ -12,6 +12,7 @@ uniform vec2 uViewport;
 uniform vec4 uImageRect;
 uniform vec4 uRect;
 uniform vec4 uPointer;
+uniform vec2 uPointerMotion;
 uniform vec4 uMaterial;
 uniform vec4 uBackdrop;
 uniform vec3 uColor;
@@ -63,29 +64,40 @@ void main() {
   if (sd > 1.0) discard;
   float coverage = 1.0 - smoothstep(-0.65, 0.65, sd);
   float inside = max(-sd, 0.0);
-  float bezel = max(1.0, min(uMaterial.x, min(uRadius * 1.05, min(halfSize.x, halfSize.y) * 0.78)));
+  float bezel = max(1.0, min(uMaterial.x, min(uRadius * 1.35, min(halfSize.x, halfSize.y) * 0.85)));
   float t = clamp(inside / bezel, 0.0, 1.0);
   float curved = 1.0 - t;
   // A regularised circular section: strong curvature at the lip, smoothly
   // becoming flat inside. The epsilon avoids the infinite edge derivative.
   float arc = sqrt(1.0 - curved * curved + 0.0256);
-  float profile = (sqrt(1.0256) - arc) / (sqrt(1.0256) - 0.16);
+  float circularProfile = (sqrt(1.0256) - arc) / (sqrt(1.0256) - 0.16);
+  // A broader shoulder keeps refraction visible beyond the very outer lip.
+  // Both curves reach the flat body with a zero derivative.
+  float profile = mix(circularProfile, curved * curved, 0.55);
   float gradientRadius = min(uRadius * 1.45, min(halfSize.x, halfSize.y));
   vec2 gradient = lensGradient(local, halfSize, gradientRadius);
   vec2 toPointer = p - uPointer.xy;
   float pointerDistance = length(toPointer);
-  float influence = exp(-dot(toPointer, toPointer) / 16000.0) * min(uPointer.z, 1.0);
-  float wave = sin(pointerDistance * 0.035 - uMotion.y * 5.0) * influence;
-  float pulse = 1.0 + wave * 0.045 + clamp(uMotion.x / 28.0, -1.0, 1.0) * 0.035;
+  float influence = exp(-dot(toPointer, toPointer) / 22000.0) * min(uPointer.z, 1.25);
+  vec2 pointerDirection = toPointer / sqrt(dot(toPointer, toPointer) + 64.0);
+  float wave = sin(pointerDistance * 0.042 - uMotion.y * 7.0) * influence;
+  float pulse = 1.0 + wave * 0.10 + influence * 0.18 + clamp(uMotion.x / 28.0, -1.0, 1.0) * 0.06;
   float slope = min(3.5, curved / arc * 0.65) * pulse;
-  vec3 normal = normalize(vec3(gradient * slope, 1.0));
+  vec2 pointerTilt = pointerDirection * (wave * 0.16 + influence * 0.12) - uPointerMotion * influence * 0.10;
+  vec3 normal = normalize(vec3(gradient * slope + pointerTilt, 1.0));
   // Backward trace through a convex lens: the lip samples farther outward,
   // while the body contracts around its own centre for optical magnification.
   // Unlike an inward rim displacement, increasing curvature cannot fold the
   // sampling map back toward the centre along a straight side.
-  float amount = min(uMaterial.y, min(halfSize.x, halfSize.y) * 0.72);
+  float amount = min(uMaterial.y, min(halfSize.x, halfSize.y) * 0.85);
   vec2 offset = gradient * amount * profile * pulse;
   offset -= local * uMagnification * smoothstep(0.0, 1.0, t);
+  // Mouse motion deforms the sampled background itself, including the lens
+  // body: a local magnifier, radial ripple and a damped directional drag.
+  // Fade this local bump at the boundary to retain the smooth rounded lip.
+  vec2 pointerBend = -toPointer * influence * 0.10
+    + pointerDirection * wave * 4.5 - uPointerMotion * influence * 7.0;
+  offset += pointerBend * smoothstep(0.0, min(bezel * 0.4, 8.0), inside) * clamp(amount / 34.0, 0.4, 1.0);
   vec2 refracted = p + offset;
   float dispersion = 0.012 * profile;
   float lod = uMaterial.w + profile * 0.18;
@@ -99,7 +111,7 @@ void main() {
   vec2 lightPosition = clamp(uPointer.xy / uViewport, 0.0, 1.0) - 0.5;
   vec3 light = normalize(vec3(vec2(-0.45, -0.65) + lightPosition * uPointer.z * 0.45, 0.85));
   vec3 halfVector = normalize(light + vec3(0.0, 0.0, 1.0));
-  float specular = pow(max(dot(normal, halfVector), 0.0), 48.0) * curved;
+  float specular = pow(max(dot(normal, halfVector), 0.0), 48.0) * max(curved, influence * 0.25);
   float rim = exp(-inside / 1.15);
   float facingLight = max(dot(gradient, normalize(light.xy)), 0.0);
   float facingShadow = max(dot(gradient, -normalize(light.xy)), 0.0);
@@ -123,7 +135,7 @@ void main() {
 
 // Nested controls sample the optical layer below them. Popovers keep CSS backdrop blur
 // as well, so text/content behind an overlay is diffused rather than duplicated.
-const surfaceSelector = ".category-section,.subcategory-tab,.category-expand,.sidebar,.search-shell,.site-card,.theme-toggle,.search-submit,.back-to-top,.search-results,.site-preview";
+const surfaceSelector = ".category-section,.subcategory-tab,.category-expand,.sidebar,.search-shell,.site-card,.theme-toggle,.search-submit,.back-to-top,.search-results,.site-preview,.wallpaper-dialog";
 type Surface = { element: HTMLElement; radius: number; bezel: number; depth: number; tint: number; roughness: number; magnification: number };
 export type GlassRenderer = { destroy: () => void };
 
@@ -193,7 +205,7 @@ export async function createLiquidGlass(isCurrent = () => document.documentEleme
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
     gl.enableVertexAttribArray(0);
     gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
-    const names = ["uWallpaper", "uScene", "uViewport", "uImageRect", "uRect", "uPointer", "uMaterial", "uBackdrop", "uColor", "uMotion", "uRadius", "uDpr", "uMagnification", "uMode"] as const;
+    const names = ["uWallpaper", "uScene", "uViewport", "uImageRect", "uRect", "uPointer", "uPointerMotion", "uMaterial", "uBackdrop", "uColor", "uMotion", "uRadius", "uDpr", "uMagnification", "uMode"] as const;
     const uniform = Object.fromEntries(names.map((name) => [name, gl.getUniformLocation(program, name)])) as Record<typeof names[number], WebGLUniformLocation | null>;
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, texture);
@@ -202,7 +214,7 @@ export async function createLiquidGlass(isCurrent = () => document.documentEleme
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     let imageWidth = 1, imageHeight = 1;
-    const source = document.body.dataset.glassWallpaper || "/images/glass-city.jpg";
+    const source = document.body.dataset.glassWallpaper || "#1d1d1f";
     const isColor = /^#[a-f\d]{6}$/i.test(source);
     const color = isColor ? [1, 3, 5].map((index) => parseInt(source.slice(index, index + 2), 16) / 255) : [0.09, 0.11, 0.16];
     if (isColor) {
@@ -289,15 +301,15 @@ export async function createLiquidGlass(isCurrent = () => document.documentEleme
         const tab = element.matches(".subcategory-tab");
         const panel = element.matches(".category-section");
         const compact = tab || element.matches(".category-expand,.theme-toggle,.search-submit,.back-to-top");
-        const popover = element.matches(".search-results,.site-preview");
+        const popover = element.matches(".search-results,.site-preview,.wallpaper-dialog");
         const radius = style.borderTopLeftRadius;
         surfaces.set(element, {
           element, radius: radius.includes("%") ? -1 : parseFloat(radius) || 14,
-          bezel: tab ? 9 : compact ? 13 : panel ? 20 : 24,
-          depth: tab ? 8 : compact ? 12 : panel ? 13 : 23,
+          bezel: tab ? 12 : compact ? 16 : panel ? 26 : 28,
+          depth: tab ? 13 : compact ? 20 : panel ? 22 : 34,
           tint: popover ? 0.18 : panel ? 0.025 : 0.075,
           roughness: popover ? 2.8 : panel ? 0.1 : 0.3,
-          magnification: panel ? 0.008 : compact ? 0.055 : 0.075,
+          magnification: panel ? 0.012 : compact ? 0.07 : 0.095,
         });
         element.classList.add("liquid-surface");
         intersection!.observe(element);
@@ -329,6 +341,11 @@ export async function createLiquidGlass(isCurrent = () => document.documentEleme
       const imageX = baseX + parallaxX, imageY = baseY + parallaxY;
       gl!.uniform4f(uniform.uImageRect, imageX, imageY, drawnWidth, drawnHeight);
       gl!.uniform4f(uniform.uPointer, pointerX, pointerY, pointerPower * motion, 0);
+      // The lag between the target and damped pointer is a bounded, frame-rate
+      // independent direction signal. It settles naturally when movement stops.
+      gl!.uniform2f(uniform.uPointerMotion,
+        Math.max(-1, Math.min(1, (targetX - pointerX) * 0.045)) * pointerPower * motion,
+        Math.max(-1, Math.min(1, (targetY - pointerY) * 0.045)) * pointerPower * motion);
       gl!.uniform2f(uniform.uMotion, scrollVelocity * motion, (now - waveStart) / 1000);
       const baseLod = Math.max(0, Math.log2(1 + backgroundBlur * imageWidth / imageDrawnWidth));
       gl!.disable(gl!.SCISSOR_TEST);
@@ -345,14 +362,14 @@ export async function createLiquidGlass(isCurrent = () => document.documentEleme
       // offscreen cards, including large content-visibility grids.
       const lenses = [...visible].flatMap((element) => {
         const surface = surfaces.get(element);
-        if (!surface || element.hidden || element.closest("[hidden]") || element.matches(".back-to-top:not(.visible)")) return [];
+        if (!surface || element.hidden || element.closest("[hidden]") || element.matches(".back-to-top:not(.visible),dialog:not([open])")) return [];
         if (element.matches(".subcategory-tab") && !element.matches(".active,:hover,:focus-visible")) return [];
         const rect = element.getBoundingClientRect();
         return rect.width && rect.height && rect.bottom > 0 && rect.top < height ? [{ surface, rect }] : [];
       });
       // Parent panels first, floating controls and popovers last.
       const layer = (element: HTMLElement) => element.matches(".category-section") ? 0
-        : element.matches(".search-results,.site-preview") ? 3
+        : element.matches(".search-results,.site-preview,.wallpaper-dialog") ? 3
         : element.matches(".subcategory-tab,.category-expand,.theme-toggle,.search-submit,.back-to-top") ? 2 : 1;
       lenses.sort((a, b) => layer(a.surface.element) - layer(b.surface.element));
       let sourceIndex = 0;
@@ -416,6 +433,8 @@ export async function createLiquidGlass(isCurrent = () => document.documentEleme
     mutation.observe(document.querySelector(".page-main")!, { subtree: true, childList: true, attributes: true, attributeFilter: ["hidden", "class"] });
     const preview = document.querySelector(".site-preview");
     if (preview) mutation.observe(preview, { attributes: true, attributeFilter: ["hidden", "style"] });
+    const wallpaperDialog = document.querySelector(".wallpaper-dialog");
+    if (wallpaperDialog) mutation.observe(wallpaperDialog, { attributes: true, attributeFilter: ["open"] });
     const backToTop = document.querySelector(".back-to-top");
     if (backToTop) mutation.observe(backToTop, { attributes: true, attributeFilter: ["class"] });
     const eventOptions = { passive: true, signal: abort.signal };

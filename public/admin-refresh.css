@@ -50,7 +50,7 @@
 .badge.off { color:#818187; background:#f6f6f7; }
 .settings-grid { gap:20px; }
 .settings-grid > label,.form-stack > label { color:#333338; }
-.wallpaper-preview { border:1px solid #d8d8de; border-radius:17px; background:#202b40 url('/images/glass-wallpaper.svg') center/cover; color:#fff; }
+.wallpaper-preview { border:1px solid #d8d8de; border-radius:17px; background:#1d1d1f center/cover; color:#fff; }
 .wallpaper-preview span { background:rgba(255,255,255,.17); color:#fff; border:1px solid rgba(255,255,255,.5); box-shadow:inset 0 1px rgba(255,255,255,.6),0 10px 25px rgba(0,0,0,.16); backdrop-filter:blur(20px) saturate(1.5); -webkit-backdrop-filter:blur(20px) saturate(1.5); }
 .wallpaper-help { color:#64646a; }
 .check-group label,.checkline { color:#34343a; }
@@ -69,6 +69,27 @@
 .switch-control > input:disabled + .switch-track { opacity:.45; }
 @media(prefers-reduced-motion:reduce) { .switch-track,.switch-track::after { transition:none; } }
 .upload-row label { color:#333338; }
+.wallpaper-library { grid-column:1 / -1; padding-top:24px; margin-top:8px; border-top:1px solid #e3e3e6; }
+.wallpaper-library-head { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:18px; }
+.wallpaper-library-head h2 { margin:0 0 6px; font-size:19px; }
+.wallpaper-library-head p { margin:0; color:#6e6e73; font-size:13px; }
+#wallpaper-library-count { flex:none; color:#6e6e73; font-size:12px; }
+.settings-grid .wallpaper-library-upload { display:inline-flex; gap:10px; max-width:100%; font-size:13px; }
+.wallpaper-library-upload input { max-width:100%; }
+.wallpaper-library-help,.wallpaper-upload-status { font-size:12px; color:#6e6e73; line-height:1.7; }
+.wallpaper-upload-status { white-space:pre-line; overflow-wrap:anywhere; }
+.wallpaper-upload-status:empty { display:none; }
+.wallpaper-library-list { display:grid; grid-template-columns:repeat(auto-fill,minmax(min(100%,220px),1fr)); gap:15px; margin-top:18px; }
+.wallpaper-library-card { min-width:0; overflow:hidden; border:1px solid #e3e3e6; border-radius:14px; background:#fafafa; }
+.wallpaper-library-card > img { display:block; width:100%; height:auto; aspect-ratio:16 / 10; object-fit:cover; background:#ededf0; }
+.settings-grid .wallpaper-name-label { display:flex; flex-direction:column; gap:7px; padding:12px 12px 8px; font-size:12px; }
+.wallpaper-name-label input { width:100%; min-width:0; }
+.wallpaper-library-actions { display:flex; flex-wrap:wrap; gap:5px; padding:0 12px 12px; }
+.wallpaper-library-actions button { padding:6px 9px; font-size:11px; line-height:1.4; border-radius:7px; }
+.wallpaper-library-actions button:disabled { opacity:.4; cursor:default; }
+.wallpaper-library-empty { grid-column:1 / -1; margin:0; padding:25px 16px; border:1px dashed #d5d5d8; border-radius:12px; color:#6e6e73; text-align:center; font-size:13px; }
+.builtin-wallpaper-setting { display:flex; align-items:center; gap:12px; margin:0 0 16px; padding:14px 16px; border:1px solid #e3e3e6; border-radius:12px; background:#fafafa; }
+.builtin-wallpaper-setting .visibility-copy { flex:1; }
 .favicon-control { display:grid; grid-template-columns:48px 1fr; gap:10px 14px; align-items:center; padding:16px; border:1px solid #e3e3e6; border-radius:13px; background:#f8f8fa; }
 .favicon-control img { object-fit:contain; padding:5px; border-radius:8px; background:#fff; border:1px solid #e3e3e6; }
 .favicon-control small { grid-column:1 / -1; color:#717177; }

@@ -16,7 +16,9 @@ html[data-theme="glass"] .ambient::after { background:rgba(0,0,0,var(--backgroun
 .brand-lockup-dark { display:none!important; }
 html[data-theme="dark"] .brand-lockup-light,html[data-theme="glass"] .brand-lockup-light { display:none!important; }
 html[data-theme="dark"] .brand-lockup-dark,html[data-theme="glass"] .brand-lockup-dark { display:block!important; }
-.top-actions { display:flex; gap:9px; top:23px; right:0; }
+.top-actions { display:flex; align-items:flex-start; gap:9px; top:23px; right:0; }
+.glass-toggle.wallpaper-only { display:none; }
+html[data-theme="glass"] .glass-toggle.wallpaper-only { display:grid; }
 .theme-toggle { width:47px; height:47px; border-radius:50%; background:var(--surface); color:var(--text); border:1px solid var(--line); box-shadow:0 4px 14px rgba(0,0,0,.07),inset 0 1px rgba(255,255,255,.16); }
 .theme-toggle:hover { transform:translateY(-2px); box-shadow:0 9px 25px rgba(0,0,0,.13),inset 0 1px rgba(255,255,255,.2); }
 .theme-rotator-disc { display:block; position:relative; width:24px; height:24px; transition:transform .45s cubic-bezier(.2,.8,.2,1); }
@@ -29,9 +31,14 @@ html[data-theme="dark"] .theme-rotator-moon,html[data-theme="glass"] .theme-rota
 .glass-toggle { position:relative; overflow:hidden; background:linear-gradient(145deg,rgba(255,255,255,.58),rgba(255,255,255,.1) 48%,rgba(0,0,0,.06)); box-shadow:inset 0 1px 2px rgba(255,255,255,.75),inset 0 -2px 3px rgba(0,0,0,.12),0 5px 18px rgba(0,0,0,.1); }
 .glass-toggle::before { content:""; position:absolute; inset:2px; border-radius:inherit; background:radial-gradient(circle at 25% 16%,rgba(255,255,255,.8),transparent 48%); pointer-events:none; }
 .glass-toggle svg { position:relative; width:23px; height:23px; }
+.glass-mode-icon,.wallpaper-mode-icon { position:absolute; inset:0; display:grid; place-items:center; pointer-events:none; transition:opacity .35s ease,transform .45s cubic-bezier(.2,.8,.2,1); }
+.wallpaper-mode-icon { opacity:0; transform:rotate(-45deg) scale(.55); }
+.glass-toggle .wallpaper-mode-icon svg { width:20px; height:20px; }
+html[data-theme="glass"] .glass-mode-icon { opacity:0; transform:rotate(45deg) scale(.55); }
+html[data-theme="glass"] .wallpaper-mode-icon { opacity:1; transform:rotate(0) scale(1); }
+@media(prefers-reduced-motion:reduce) { .glass-mode-icon,.wallpaper-mode-icon { transition:none; } }
 html[data-theme="dark"] .glass-toggle { background:linear-gradient(145deg,rgba(255,255,255,.2),rgba(255,255,255,.025) 50%,rgba(0,0,0,.3)); }
 html[data-theme="glass"] .glass-toggle { background:rgba(255,255,255,.2); border-color:rgba(255,255,255,.52); color:#fff; backdrop-filter:blur(24px) saturate(1.7); -webkit-backdrop-filter:blur(24px) saturate(1.7); box-shadow:inset 0 1px rgba(255,255,255,.8),inset 0 -1px rgba(255,255,255,.3),0 10px 28px rgba(7,15,31,.22); }
-html[data-theme="glass"] .glass-toggle[aria-pressed="true"] { border-color:rgba(255,255,255,.82); box-shadow:inset 0 1px rgba(255,255,255,.95),inset 0 0 16px rgba(255,255,255,.24),0 0 0 3px rgba(255,255,255,.16),0 10px 28px rgba(7,15,31,.22); }
 
 .sidebar,.content-layout .sidebar { background:var(--sidebar); color:var(--text); border-color:var(--line); box-shadow:var(--shadow); }
 html[data-theme="light"] .content-layout .sidebar { background:#fff; color:#1d1d1f; border-color:rgba(0,0,0,.1); box-shadow:0 12px 36px rgba(0,0,0,.055); }
@@ -143,7 +150,7 @@ html[data-theme="glass"][data-glass-renderer="webgl"] .liquid-surface:is(.site-c
 html[data-theme="glass"][data-glass-renderer="webgl"] .site-card::before { background:radial-gradient(130px circle at var(--glass-x,50%) var(--glass-y,0%),rgba(255,255,255,.065),transparent 75%); }
 html[data-theme="glass"][data-glass-renderer="webgl"] .site-card::after { background:linear-gradient(180deg,rgba(255,255,255,.025),transparent 24%); }
 html[data-theme="glass"][data-glass-renderer="webgl"] .glass-toggle::before { opacity:.25; }
-html[data-theme="glass"][data-glass-renderer="webgl"] .liquid-surface:is(.search-results,.site-preview) { background:rgba(0,0,0,.035); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); }
+html[data-theme="glass"][data-glass-renderer="webgl"] .liquid-surface:is(.search-results,.site-preview,.wallpaper-dialog) { background:rgba(0,0,0,.035); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); }
 html[data-theme="glass"] .site-card strong,html[data-theme="glass"] .section-heading h2 { text-shadow:0 1px 9px rgba(0,0,0,.3); }
 html[data-theme="glass"] .side-link:hover { background:radial-gradient(100px circle at var(--glass-x,50%) var(--glass-y,50%),rgba(255,255,255,.14),transparent 90%),rgba(255,255,255,.07); }
 @media(prefers-reduced-motion:reduce) {
@@ -246,7 +253,7 @@ html[data-theme="glass"][data-glass-renderer="webgl"] .category-section .site-ca
 html[data-theme="glass"][data-glass-renderer="webgl"] .subcategory-tab.liquid-surface.active,
 html[data-theme="glass"][data-glass-renderer="webgl"] .subcategory-tab.liquid-surface:hover,
 html[data-theme="glass"][data-glass-renderer="webgl"] .category-expand.liquid-surface,
-html[data-theme="glass"][data-glass-renderer="webgl"] .glass-toggle.liquid-surface[aria-pressed="true"] { border-color:transparent; box-shadow:0 3px 12px rgba(0,0,0,.16); }
+html[data-theme="glass"][data-glass-renderer="webgl"] .glass-toggle.liquid-surface { border-color:transparent; box-shadow:0 3px 12px rgba(0,0,0,.16); }
 html[data-theme="glass"] .page-main { text-shadow:0 1px 3px rgba(0,0,0,.36); }
 html[data-theme="glass"]:not([data-glass-renderer="webgl"]) :is(.sidebar,.search-shell,.site-card,.category-section,.theme-toggle,.subcategory-tab.active,.category-expand) {
   background:linear-gradient(145deg,rgba(255,255,255,.12),rgba(255,255,255,.035));
@@ -259,3 +266,26 @@ html[data-theme="glass"]:not([data-glass-renderer="webgl"]) :is(.sidebar,.search
   html[data-theme="glass"] .subcategory-tab { backdrop-filter:none; -webkit-backdrop-filter:none; }
   html[data-theme="glass"] .category-expand { background:rgba(255,255,255,.13); backdrop-filter:none; -webkit-backdrop-filter:none; }
 }
+
+/* The glass switch morphs into this wallpaper picker after enabling the theme. */
+.wallpaper-dialog { width:min(650px,calc(100vw - 28px)); max-height:min(80dvh,650px); padding:22px; border:1px solid rgba(255,255,255,.2); border-radius:26px; background:rgba(24,24,28,.25); color:#fff; box-shadow:0 24px 80px rgba(0,0,0,.3),inset 0 1px rgba(255,255,255,.15); backdrop-filter:blur(18px) saturate(1.12); -webkit-backdrop-filter:blur(18px) saturate(1.12); overflow-y:auto; }
+.wallpaper-dialog::backdrop { background:rgba(0,0,0,.32); backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px); }
+.wallpaper-dialog-head { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:18px; }
+.wallpaper-dialog-head h2 { margin:0; font-size:22px; font-weight:600; letter-spacing:-.025em; }
+.wallpaper-dialog-head p { margin:7px 0 0; font-size:13px; color:rgba(255,255,255,.76); }
+#wallpaper-close { display:grid; place-items:center; flex:none; width:32px; height:32px; border:1px solid rgba(255,255,255,.15); border-radius:50%; background:rgba(255,255,255,.06); color:#fff; font-size:22px; line-height:1; }
+#wallpaper-close:hover { background:rgba(255,255,255,.16); }
+.wallpaper-options { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
+.wallpaper-option { position:relative; display:flex; flex-direction:column; min-width:0; padding:0; overflow:hidden; border:1px solid rgba(255,255,255,.18); border-radius:14px; background:rgba(255,255,255,.04); color:#fff; text-align:left; transition:border-color .2s,background .2s; }
+.wallpaper-option:hover { border-color:rgba(255,255,255,.5); background:rgba(255,255,255,.1); }
+.wallpaper-option[aria-pressed="true"] { border-color:rgba(255,255,255,.85); box-shadow:0 0 0 1px rgba(255,255,255,.35); }
+.wallpaper-option img,.wallpaper-color { display:block; width:100%; height:auto; aspect-ratio:16 / 10; object-fit:cover; background-color:rgba(0,0,0,.08); }
+.wallpaper-option-name { display:block; width:100%; padding:10px 12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:12px; }
+.wallpaper-selected { position:absolute; top:8px; right:8px; display:none; place-items:center; width:23px; height:23px; border-radius:50%; background:#fff; color:#1d1d1f; font-size:14px; text-shadow:none; }
+.wallpaper-option[aria-pressed="true"] .wallpaper-selected { display:grid; }
+.wallpaper-status { min-height:19px; margin:14px 0 0; color:rgba(255,255,255,.86); font-size:12px; }
+.wallpaper-empty { grid-column:1 / -1; padding:22px 0; margin:0; color:rgba(255,255,255,.8); text-align:center; font-size:13px; }
+.wallpaper-dialog :is(button):focus-visible { outline:2px solid #fff; outline-offset:3px; }
+@media(max-width:620px) { .wallpaper-dialog { padding:18px; border-radius:22px; } .wallpaper-options { grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; } }
+@media(prefers-reduced-motion:reduce) { .wallpaper-option { transition:none; } }
+@media(prefers-reduced-transparency:reduce) { .wallpaper-dialog,html[data-theme="glass"][data-glass-renderer="webgl"] .wallpaper-dialog.liquid-surface { background:#262628; backdrop-filter:none; -webkit-backdrop-filter:none; } }

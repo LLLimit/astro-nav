@@ -29,6 +29,7 @@ export async function saveUpload(
             ? "ico"
             : null;
   if (!extension) throw new UploadError("只支持 PNG、JPEG、WebP 或 ICO 图片");
+  if (kind === "backgrounds" && extension === "ico") throw new UploadError("壁纸只支持 PNG、JPEG 或 WebP 图片");
   const sourceExtension = path.extname(file.name).toLowerCase();
   if (
     !(

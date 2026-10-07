@@ -434,6 +434,10 @@ export const POST: APIRoute = async ({ params, request, cookies }) => {
       };
       const issue = error.issues[0];
       const field = String(issue?.path.at(-1) || "输入内容");
+      if (issue?.path[0] === "wallpapers") {
+        const label = field === "name" ? "壁纸名称" : field === "path" ? "壁纸图片" : "可选壁纸";
+        return fail(`${label}不符合要求：${issue.message}`);
+      }
       return fail(`${fields[field] || field}不符合要求：${issue?.message || "请检查格式"}`);
     }
     if (

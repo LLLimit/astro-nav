@@ -1,5 +1,6 @@
 export {};
 import type { EChartsOption } from "echarts";
+import { WALLPAPER_LIMIT, WALLPAPER_UPLOAD_PATH, siteWallpaper, type UploadedWallpaper } from "../lib/wallpapers";
 type Category = {
   id: number;
   parentId: number | null;
@@ -624,12 +625,12 @@ async function upload(file: File, kind: string) {
   body.set("file", file);
   body.set("kind", kind);
   const response = await fetch("/api/admin/upload", { method: "POST", body });
-  const result = (await response.json()) as {
+  const result = (await response.json().catch(() => { throw new Error(`上传失败（HTTP ${response.status}），请检查图片大小或服务器配置`); })) as {
     success: boolean;
     data: { path: string };
     message?: string;
   };
-  if (!result.success) throw new Error(result.message || "上传失败");
+  if (!response.ok || !result.success) throw new Error(result.message || `上传失败（HTTP ${response.status}）`);
   return result.data.path;
 }
 document.querySelectorAll<HTMLInputElement>("[data-upload]").forEach((input) =>
@@ -644,6 +645,7 @@ document.querySelectorAll<HTMLInputElement>("[data-upload]").forEach((input) =>
       if (input.dataset.upload === "backgrounds") {
         setValue(form, "backgroundType", "image");
         updateWallpaperPreview();
+        renderWallpaperLibrary();
       }
       if (input.dataset.target === "favicon") updateFaviconPreview();
       message("上传成功，点击保存后生效");
@@ -880,49 +882,167 @@ function updateWallpaperPreview() {
   const form = $<HTMLFormElement>("#settings-form");
   const preview = $<HTMLDivElement>("#wallpaper-preview");
   if (!form || !preview) return;
-  const type = getInput(form, "backgroundType").value;
-  const value = getInput(form, "backgroundValue").value.trim();
+  const wallpaper = siteWallpaper({
+    backgroundType: getInput(form, "backgroundType").value,
+    backgroundValue: getInput(form, "backgroundValue").value.trim(),
+    showBuiltinWallpapers: (getInput(form, "showBuiltinWallpapers") as HTMLInputElement).checked,
+    wallpapers: wallpapersDraft,
+  });
   preview.dataset.theme = "glass";
-  preview.style.backgroundImage = 'url("/images/glass-city.jpg")';
-  preview.style.backgroundColor = "";
-  if (type === "image" && /^\/media\/backgrounds\/[a-f0-9-]{36}\.(png|jpg|webp)$/.test(value)) {
-    preview.style.backgroundImage = `url("${value}")`;
-  } else if (type === "color" && /^#[a-fA-F0-9]{6}$/.test(value)) {
-    preview.style.backgroundImage = "none";
-    preview.style.backgroundColor = value;
-  }
+  preview.style.backgroundImage = wallpaper.type === "image" ? `url("${wallpaper.value}")` : "none";
+  preview.style.backgroundColor = wallpaper.type === "color" ? wallpaper.value : "";
 }
 const wallpaperForm = $<HTMLFormElement>("#settings-form");
-for (const name of ["defaultTheme", "backgroundType", "backgroundValue"]) {
+let wallpapersDraft: UploadedWallpaper[] = [];
+let wallpaperUploadBusy = false;
+let settingsSaveBusy = false;
+function renderWallpaperLibrary() {
+  const list = $("#wallpaper-library-list");
+  const count = $("#wallpaper-library-count");
+  if (count) count.textContent = `${wallpapersDraft.length} / ${WALLPAPER_LIMIT}`;
+  if (!list || !wallpaperForm) return;
+  updateWallpaperPreview();
+  list.replaceChildren();
+  if (!wallpapersDraft.length) {
+    list.append(el("p", "wallpaper-library-empty", "还没有导入壁纸。可开启内置壁纸，或导入自己的图片。"));
+    return;
+  }
+  const defaultPath = getInput(wallpaperForm, "backgroundType").value === "image" ? getInput(wallpaperForm, "backgroundValue").value : "";
+  wallpapersDraft.forEach((wallpaper, index) => {
+    const card = el("div", "wallpaper-library-card");
+    const image = el("img");
+    image.src = wallpaper.path;
+    image.alt = wallpaper.name;
+    image.loading = "lazy";
+    image.decoding = "async";
+    const label = el("label", "wallpaper-name-label", "壁纸名称");
+    const name = el("input");
+    name.type = "text";
+    name.value = wallpaper.name;
+    name.maxLength = 80;
+    name.required = true;
+    name.disabled = wallpaperUploadBusy || settingsSaveBusy;
+    name.addEventListener("input", () => { wallpaper.name = name.value; image.alt = name.value; });
+    label.append(name);
+    const actions = el("div", "wallpaper-library-actions");
+    function button(text: string, callback: () => void, disabled = false) {
+      const control = el("button", "", text);
+      control.type = "button";
+      control.disabled = disabled || wallpaperUploadBusy || settingsSaveBusy;
+      control.addEventListener("click", callback);
+      actions.append(control);
+      return control;
+    }
+    button(defaultPath === wallpaper.path ? "当前默认" : "设为默认", () => {
+      setValue(wallpaperForm!, "backgroundType", "image");
+      setValue(wallpaperForm!, "backgroundValue", wallpaper.path);
+      updateWallpaperPreview();
+      renderWallpaperLibrary();
+      message("已设为默认壁纸，点击保存设置后生效");
+    }, defaultPath === wallpaper.path);
+    const previous = button("↑", () => {
+      [wallpapersDraft[index - 1], wallpapersDraft[index]] = [wallpapersDraft[index], wallpapersDraft[index - 1]];
+      renderWallpaperLibrary();
+    }, index === 0);
+    previous.setAttribute("aria-label", `上移壁纸「${wallpaper.name}」`);
+    const next = button("↓", () => {
+      [wallpapersDraft[index + 1], wallpapersDraft[index]] = [wallpapersDraft[index], wallpapersDraft[index + 1]];
+      renderWallpaperLibrary();
+    }, index === wallpapersDraft.length - 1);
+    next.setAttribute("aria-label", `下移壁纸「${wallpaper.name}」`);
+    button("移除", () => {
+      wallpapersDraft.splice(index, 1);
+      if (defaultPath === wallpaper.path) {
+        setValue(wallpaperForm!, "backgroundType", "gradient");
+        setValue(wallpaperForm!, "backgroundValue", "");
+        updateWallpaperPreview();
+      }
+      renderWallpaperLibrary();
+      message("已从可选列表移除，点击保存设置后生效");
+    });
+    card.append(image, label, actions);
+    list.append(card);
+  });
+}
+const wallpaperFiles = $<HTMLInputElement>("#wallpaper-files");
+wallpaperFiles?.addEventListener("change", async () => {
+  const files = [...(wallpaperFiles.files || [])];
+  if (!files.length || wallpaperUploadBusy || settingsSaveBusy) return;
+  const status = $("#wallpaper-upload-status");
+  if (files.length + wallpapersDraft.length > WALLPAPER_LIMIT) {
+    message(`最多 ${WALLPAPER_LIMIT} 张，目前还可导入 ${WALLPAPER_LIMIT - wallpapersDraft.length} 张`, true);
+    wallpaperFiles.value = "";
+    return;
+  }
+  wallpaperUploadBusy = true;
+  wallpaperFiles.disabled = true;
+  const submit = wallpaperForm?.querySelector<HTMLButtonElement>('button[type="submit"]');
+  if (submit) submit.disabled = true;
+  renderWallpaperLibrary();
+  let succeeded = 0;
+  const errors: string[] = [];
+  try {
+    for (const [index, file] of files.entries()) {
+      if (status) status.textContent = `正在导入 ${index + 1} / ${files.length}：${file.name}`;
+      try {
+        const path = await upload(file, "backgrounds");
+        if (!WALLPAPER_UPLOAD_PATH.test(path)) throw new Error("服务器返回了无效的壁纸路径");
+        wallpapersDraft.push({ path, name: file.name.replace(/\.[^.]+$/, "").trim().slice(0, 80) || "壁纸" });
+        succeeded++;
+        renderWallpaperLibrary();
+      } catch (error) {
+        errors.push(`${file.name}：${error instanceof Error ? error.message : "导入失败"}`);
+      }
+    }
+    const result = `成功导入 ${succeeded} 张${errors.length ? `，失败 ${errors.length} 张` : ""}。${succeeded ? "点击保存设置后生效。" : ""}`;
+    if (status) status.textContent = [result, ...errors].join("\n");
+    message(result, errors.length > 0);
+  } finally {
+    wallpaperUploadBusy = false;
+    wallpaperFiles.disabled = false;
+    wallpaperFiles.value = "";
+    if (submit) submit.disabled = false;
+    renderWallpaperLibrary();
+    updateWallpaperPreview();
+  }
+});
+for (const name of ["defaultTheme", "backgroundType", "backgroundValue", "showBuiltinWallpapers"]) {
   if (!wallpaperForm) break;
   getInput(wallpaperForm, name).addEventListener("input", updateWallpaperPreview);
   getInput(wallpaperForm, name).addEventListener("change", updateWallpaperPreview);
+  if (name !== "defaultTheme") getInput(wallpaperForm, name).addEventListener("change", renderWallpaperLibrary);
 }
 $("#clear-background")?.addEventListener("click", () => {
   if (!wallpaperForm) return;
   setValue(wallpaperForm, "backgroundType", "gradient");
   setValue(wallpaperForm, "backgroundValue", "");
   updateWallpaperPreview();
+  renderWallpaperLibrary();
   message("已选择默认壁纸，点击保存设置后生效");
 });
 async function loadSettings() {
+  if (wallpaperUploadBusy || settingsSaveBusy) return;
   try {
     const values = await api<Record<string, unknown>>("settings");
     loadedSettings = values;
+    wallpapersDraft = Array.isArray(values.wallpapers) ? values.wallpapers.map(item => ({ ...item as UploadedWallpaper })) : [];
     const form = $<HTMLFormElement>("#settings-form");
     if (form)
       for (const [key, value] of Object.entries(values))
         if (form.elements.namedItem(key)) setValue(form, key, value);
     updateWallpaperPreview();
     updateFaviconPreview();
+    renderWallpaperLibrary();
   } catch (error) {
     message(error instanceof Error ? error.message : "加载失败", true);
   }
 }
 $("#settings-form")?.addEventListener("submit", async (event) => {
   event.preventDefault();
+  if (wallpaperUploadBusy || settingsSaveBusy) return;
   const form = event.currentTarget as HTMLFormElement;
   const value: Record<string, unknown> = { ...loadedSettings };
+  value.wallpapers = wallpapersDraft.map(item => ({ name: item.name.trim(), path: item.path }));
   for (const element of Array.from(form.elements)) {
     if (
       !(
@@ -942,15 +1062,24 @@ $("#settings-form")?.addEventListener("submit", async (event) => {
           : element.value;
   }
   const submit = form.querySelector<HTMLButtonElement>('button[type="submit"]');
+  settingsSaveBusy = true;
+  if (wallpaperFiles) wallpaperFiles.disabled = true;
+  renderWallpaperLibrary();
   if (submit) { submit.disabled = true; submit.textContent = "保存中…"; }
   const saved = await action<Record<string, unknown>>("settings", value);
   if (saved) {
     loadedSettings = saved;
+    wallpapersDraft = (saved.wallpapers as UploadedWallpaper[]).map(item => ({ ...item }));
+    const wallpaperStatus = $("#wallpaper-upload-status");
+    if (wallpaperStatus) wallpaperStatus.textContent = wallpapersDraft.length ? `已发布 ${wallpapersDraft.length} 张可选壁纸。` : "";
     const favicon = document.querySelector<HTMLLinkElement>('link[rel="icon"]');
     const preview = $<HTMLImageElement>("#favicon-preview");
     if (favicon && preview) favicon.href = preview.src;
   }
   if (submit) { submit.disabled = false; submit.textContent = "保存设置"; }
+  settingsSaveBusy = false;
+  if (wallpaperFiles) wallpaperFiles.disabled = false;
+  renderWallpaperLibrary();
 });
 $("#password-form")?.addEventListener("submit", async (event) => {
   event.preventDefault();

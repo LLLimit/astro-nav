@@ -1,8 +1,10 @@
 ---
 import type { SiteSettings } from '../db/repository';
+import { wallpaperChoices } from '../lib/wallpapers';
 
 interface Props { settings: SiteSettings }
 const { settings } = Astro.props;
+const wallpapers = wallpaperChoices(settings);
 ---
 
 <header class="topbar" id="top">
@@ -19,9 +21,10 @@ const { settings } = Astro.props;
         <svg class="theme-rotator-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.2 15.3A8.5 8.5 0 0 1 8.7 3.8 8.5 8.5 0 1 0 20.2 15.3Z"/></svg>
       </span>
     </button>}
-    {settings.allowThemeSwitch && <button id="glass-toggle" class="theme-toggle glass-toggle" type="button" aria-label="启用液态玻璃主题" title="启用液态玻璃主题" aria-pressed="false">
-      <svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M16 3.4c-2.7 4.8-8.8 10.8-8.8 16A8.8 8.8 0 0 0 16 28.2a8.8 8.8 0 0 0 8.8-8.8c0-5.2-6.1-11.2-8.8-16Z" stroke="currentColor" stroke-width="1.5"/><path d="M11.6 20.2a4.8 4.8 0 0 0 4.8 4.8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M13.3 9.3c-1.5 2-3 4.1-3.6 6" stroke="white" stroke-opacity=".85" stroke-width="1.5" stroke-linecap="round"/></svg>
-    </button>}
+    <button id="glass-toggle" class:list={["theme-toggle", "glass-toggle", {"wallpaper-only": !settings.allowThemeSwitch}]} type="button" aria-label="启用液态玻璃主题" title="启用液态玻璃主题">
+      <span class="glass-mode-icon" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none"><path d="M16 3.4c-2.7 4.8-8.8 10.8-8.8 16A8.8 8.8 0 0 0 16 28.2a8.8 8.8 0 0 0 8.8-8.8c0-5.2-6.1-11.2-8.8-16Z" stroke="currentColor" stroke-width="1.5"/><path d="M11.6 20.2a4.8 4.8 0 0 0 4.8 4.8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M13.3 9.3c-1.5 2-3 4.1-3.6 6" stroke="white" stroke-opacity=".85" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+      <span class="wallpaper-mode-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m3 16 5-5 5 5 3-3 5 5"/></svg></span>
+    </button>
   </div>
 </header>
 <dialog id="glass-confirm" class="glass-confirm" aria-labelledby="glass-confirm-title">
@@ -30,6 +33,18 @@ const { settings } = Astro.props;
     <p>请注意,该主题需要较高的电脑性能!是否确认启用？</p>
     <div class="glass-confirm-actions"><button value="cancel" type="submit">取消</button><button value="confirm" type="submit">确认启用</button></div>
   </form>
+</dialog>
+<dialog id="wallpaper-dialog" class="wallpaper-dialog" aria-labelledby="wallpaper-dialog-title">
+  <div class="wallpaper-dialog-head"><div><h2 id="wallpaper-dialog-title">选择壁纸</h2><p>选择会在此浏览器中记住。</p></div><button id="wallpaper-close" type="button" aria-label="关闭壁纸选择">×</button></div>
+  <div class="wallpaper-options" role="group" aria-label="可选壁纸">
+    {wallpapers.length === 0 && <p class="wallpaper-empty">暂无可选壁纸，请管理员在后台导入。</p>}
+    {wallpapers.map(wallpaper => <button type="button" class="wallpaper-option" data-wallpaper-id={wallpaper.id} data-wallpaper-value={wallpaper.value} data-wallpaper-type={wallpaper.type} aria-pressed={wallpaper.id === 'default' ? 'true' : 'false'}>
+      {wallpaper.type === 'image' ? <img src={wallpaper.value} alt="" loading="lazy" decoding="async" width="240" height="150" /> : <span class="wallpaper-color" style={`background-color:${wallpaper.value}`}></span>}
+      <span class="wallpaper-option-name">{wallpaper.name}</span>
+      <span class="wallpaper-selected" aria-hidden="true">✓</span>
+    </button>)}
+  </div>
+  <p id="wallpaper-status" class="wallpaper-status" role="status" aria-live="polite"></p>
 </dialog>
 <div class="search-area">
   <div class="search-tabs" aria-label="搜索方式">

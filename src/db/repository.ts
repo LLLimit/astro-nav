@@ -21,6 +21,13 @@ import {
 } from "../lib/validation";
 import { z } from "zod";
 import { alias } from "drizzle-orm/mysql-core";
+import { WALLPAPER_LIMIT, WALLPAPER_UPLOAD_PATH } from "../lib/wallpapers";
+
+const wallpapersInput = z.array(z.object({
+  name: z.string().trim().min(1, "请填写壁纸名称").max(80, "名称最多 80 个字"),
+  path: z.string().regex(WALLPAPER_UPLOAD_PATH, "请使用后台上传的壁纸图片"),
+})).max(WALLPAPER_LIMIT, `最多保存 ${WALLPAPER_LIMIT} 张可选壁纸`)
+  .refine((items) => new Set(items.map((item) => item.path)).size === items.length, "不能重复添加同一张壁纸");
 
 export const siteSettingsSchema = z.object({
   name: z.string().min(1).max(100).default("LLLimit 导航站"),
@@ -45,6 +52,8 @@ export const siteSettingsSchema = z.object({
   backgroundBlur: z.number().min(0).max(30).default(0),
   backgroundBrightness: z.number().min(0.3).max(2).default(1),
   backgroundOverlay: z.number().min(0).max(0.8).default(0.12),
+  wallpapers: wallpapersInput.default([]),
+  showBuiltinWallpapers: z.boolean().default(true),
 });
 export type SiteSettings = z.infer<typeof siteSettingsSchema>;
 
