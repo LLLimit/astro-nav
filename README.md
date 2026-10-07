@@ -4,6 +4,8 @@
 
 项目仓库：[LLLimit/astro-nav](https://github.com/LLLimit/astro-nav)。
 
+在线演示：[map.darkduck.fun](https://map.darkduck.fun/)。
+
 ## 功能
 
 - 支持两级分类：侧边栏只显示一级分类，每个一级分类拥有独立分区，顶部显示「全部」及手动创建的二级分类标签，默认选中「全部」，不自动生成「未细分」；支持空分类提示和小屏横向滚动。分区与标签同步适配黑白、液态玻璃主题。管理操作见 [两级分类说明](docs/two-level-categories.md)。
