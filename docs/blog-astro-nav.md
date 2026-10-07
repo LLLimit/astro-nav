@@ -6,7 +6,7 @@
 
 - GitHub：[LLLimit/astro-nav](https://github.com/LLLimit/astro-nav)
 - 版本下载：[GitHub Releases](https://github.com/LLLimit/astro-nav/releases)
-- 本文对应版本：[v1.1.0](https://github.com/LLLimit/astro-nav/releases/tag/v1.1.0)
+- 本文对应版本：[v1.1.1](https://github.com/LLLimit/astro-nav/releases/tag/v1.1.1)
 
 ## 首页可以做什么？
 
@@ -26,7 +26,7 @@ AI 工具
 └── 开发工具
 ```
 
-可以点击标签查看对应网址，也可以查看「全部」。直接放在一级分类下的网址会出现在「未细分」中。小屏幕下标签可以横向滚动，侧边栏也能折叠。
+可以点击标签查看对应网址，也可以查看「全部」。「全部」包含直接放在一级分类下及其可见二级分类中的网址，不自动生成「未细分」标签。每个分类或标签默认最多显示 15 个网址，超过时可以展开全部并再次收起；折叠的网址仍然可以通过站内搜索找到。小屏幕下标签可以横向滚动，侧边栏也能折叠。
 
 原来已经使用单层分类的站点，升级后原分类会保留为一级分类，不需要重新整理全部网址。
 
@@ -75,7 +75,7 @@ AI 工具
 - MySQL 8。
 - Node.js 22.12 或更高的兼容版本，并在 Node 版本管理器中设置命令行版本。
 
-把域名解析到服务器。上传 [Release 压缩包](https://github.com/LLLimit/astro-nav/releases/tag/v1.1.0) 并解压，确认 `package.json` 位于 `/www/wwwroot/astro-nav`，避免多套一层目录。
+把域名解析到服务器。上传 [Release 压缩包](https://github.com/LLLimit/astro-nav/releases/tag/v1.1.1) 并解压，确认 `package.json` 位于 `/www/wwwroot/astro-nav`，避免多套一层目录。
 
 也可以通过 Git 获取源码：
 

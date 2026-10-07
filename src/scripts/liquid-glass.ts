@@ -100,7 +100,7 @@ void main() {
 
 // Nested controls are drawn after their parent. Popovers keep CSS backdrop blur
 // as well, so text/content behind an overlay is diffused rather than duplicated.
-const surfaceSelector = ".category-section,.subcategory-tab,.sidebar,.search-shell,.site-card,.theme-toggle,.search-submit,.back-to-top,.search-results,.site-preview";
+const surfaceSelector = ".category-section,.subcategory-tab,.category-expand,.sidebar,.search-shell,.site-card,.theme-toggle,.search-submit,.back-to-top,.search-results,.site-preview";
 type Surface = { element: HTMLElement; radius: number; bezel: number; depth: number; tint: number };
 export type GlassRenderer = { destroy: () => void };
 
@@ -242,7 +242,7 @@ export async function createLiquidGlass(isCurrent = () => document.documentEleme
         const style = getComputedStyle(element);
         const tab = element.matches(".subcategory-tab");
         const panel = element.matches(".category-section");
-        const compact = tab || element.matches(".theme-toggle,.search-submit,.back-to-top");
+        const compact = tab || element.matches(".category-expand,.theme-toggle,.search-submit,.back-to-top");
         const radius = style.borderTopLeftRadius;
         surfaces.set(element, {
           element, radius: radius.includes("%") ? -1 : parseFloat(radius) || 14,
@@ -302,7 +302,7 @@ export async function createLiquidGlass(isCurrent = () => document.documentEleme
       // Parent panels first, floating controls and popovers last.
       const layer = (element: HTMLElement) => element.matches(".category-section") ? 0
         : element.matches(".search-results,.site-preview") ? 3
-        : element.matches(".subcategory-tab,.theme-toggle,.search-submit,.back-to-top") ? 2 : 1;
+        : element.matches(".subcategory-tab,.category-expand,.theme-toggle,.search-submit,.back-to-top") ? 2 : 1;
       lenses.sort((a, b) => layer(a.surface.element) - layer(b.surface.element));
       for (const { surface, rect } of lenses) {
         // Horizontal tab scrolling clips the optical layer as well as its DOM label.

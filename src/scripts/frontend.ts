@@ -1,4 +1,5 @@
 export {};
+import { CATEGORY_PREVIEW_LIMIT } from "../lib/category-display";
 const input = document.querySelector<HTMLInputElement>("#search-input");
 const mode = document.querySelector<HTMLInputElement>("#search-mode");
 const results = document.querySelector<HTMLDivElement>("#search-results");
@@ -40,28 +41,58 @@ for (const section of document.querySelectorAll<HTMLElement>(".category-section"
   const grid = section.querySelector<HTMLElement>(".site-grid");
   const count = section.querySelector<HTMLElement>(".section-count");
   const empty = section.querySelector<HTMLElement>("[data-category-empty]");
+  const more = section.querySelector<HTMLElement>("[data-category-more]");
+  const expand = section.querySelector<HTMLButtonElement>("[data-category-expand]");
+  const expandLabel = expand?.querySelector<HTMLElement>("[data-category-expand-label]");
+  const expandedTabs = new Set<string>();
+  let selected = buttons[0]?.dataset.subcategory || "all";
+
+  function displayCategoryCards() {
+    const expanded = expandedTabs.has(selected);
+    let matching = 0;
+    for (const card of sectionCards) {
+      const matches = selected === "all" || card.dataset.subcategoryId === selected;
+      card.hidden = !matches || (!expanded && matching >= CATEGORY_PREVIEW_LIMIT);
+      if (matches) matching++;
+    }
+    if (count) count.textContent = `${matching} 个网站`;
+    if (empty) empty.hidden = matching > 0;
+    if (more) more.hidden = matching <= CATEGORY_PREVIEW_LIMIT;
+    expand?.setAttribute("aria-expanded", String(expanded && matching > CATEGORY_PREVIEW_LIMIT));
+    if (expandLabel) expandLabel.textContent = expanded ? "收起"
+      : `展开全部（还有 ${Math.max(0, matching - CATEGORY_PREVIEW_LIMIT)} 个）`;
+  }
+  function animateCategoryCards() {
+    if (!grid || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    grid.classList.remove("category-switch");
+    void grid.offsetWidth;
+    grid.classList.add("category-switch");
+  }
+  expand?.addEventListener("click", () => {
+    hideSitePreview();
+    const collapsing = expandedTabs.has(selected);
+    if (collapsing) expandedTabs.delete(selected);
+    else expandedTabs.add(selected);
+    displayCategoryCards();
+    animateCategoryCards();
+    // The footer button moves upward when a long list closes. Keep the user
+    // with this category instead of leaving them inside the following panel.
+    if (collapsing && section.getBoundingClientRect().top < 0)
+      scrollToCategory(section, matchMedia("(prefers-reduced-motion:reduce)").matches ? "instant" : "smooth");
+  });
+  displayCategoryCards();
   for (const [index, button] of buttons.entries()) {
     button.addEventListener("click", () => {
       if (button.getAttribute("aria-pressed") === "true") return;
       hideSitePreview();
-      const selected = button.dataset.subcategory;
-      let visible = 0;
-      for (const card of sectionCards) {
-        card.hidden = selected !== "all" && card.dataset.subcategoryId !== selected;
-        if (!card.hidden) visible++;
-      }
+      selected = button.dataset.subcategory || "all";
       for (const tab of buttons) {
         const active = tab === button;
         tab.classList.toggle("active", active);
         tab.setAttribute("aria-pressed", String(active));
       }
-      if (count) count.textContent = `${visible} 个网站`;
-      if (empty) empty.hidden = visible > 0;
-      if (grid && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
-        grid.classList.remove("category-switch");
-        void grid.offsetWidth;
-        grid.classList.add("category-switch");
-      }
+      displayCategoryCards();
+      animateCategoryCards();
     });
     button.addEventListener("keydown", (event) => {
       const target = event.key === "ArrowRight" ? (index + 1) % buttons.length
