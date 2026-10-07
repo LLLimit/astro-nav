@@ -376,6 +376,7 @@ async function loadSites() {
   const query = $<HTMLInputElement>("#site-query")?.value || "";
   const category = $<HTMLSelectElement>("#site-category-filter")?.value || "";
   const status = $<HTMLSelectElement>("#site-status-filter")?.value || "";
+  const iconFilter = $<HTMLSelectElement>("#site-icon-filter")?.value || "";
   const sort = $<HTMLSelectElement>("#site-sort")?.value || "order";
   try {
     const result = await api<{
@@ -384,7 +385,7 @@ async function loadSites() {
       page: number;
       tags: Record<number, string[]>;
     }>(
-      `sites?page=${sitePage}&q=${encodeURIComponent(query)}&category=${category}&status=${status}&sort=${sort}`,
+      `sites?page=${sitePage}&q=${encodeURIComponent(query)}&category=${category}&status=${status}&sort=${sort}&icon=${iconFilter}`,
     );
     siteRows = result.rows;
     siteTotal = result.total;
@@ -398,6 +399,7 @@ function renderSites() {
   const list = $("#site-list");
   if (!list) return;
   list.replaceChildren();
+  if (!siteRows.length) list.append(el("p", "admin-list-empty", "没有符合当前筛选条件的网址。"));
   for (const { site, category } of siteRows) {
     const row = el("div", "admin-row");
     const check = el("input", "site-select") as HTMLInputElement;
@@ -407,6 +409,7 @@ function renderSites() {
     icon.src = site.icon || "/images/default.svg";
     icon.alt = "";
     const main = el("div", "row-main");
+    main.title = `${site.title}\n${site.url}`;
     main.append(
       el("strong", "", site.title),
       el("small", "", site.url),
@@ -457,6 +460,16 @@ function renderSites() {
 $("#site-filter")?.addEventListener("click", () => {
   sitePage = 1;
   void loadSites();
+});
+$("#site-icon-filter")?.addEventListener("change", () => {
+  sitePage = 1;
+  void loadSites();
+});
+$("#site-temporary-edit")?.addEventListener("click", () => {
+  const enabled = $("#site-list")?.classList.toggle("temporary-edit") ?? false;
+  const toggle = $<HTMLButtonElement>("#site-temporary-edit");
+  toggle?.setAttribute("aria-pressed", String(enabled));
+  if (toggle) toggle.textContent = enabled ? "退出临时编辑" : "临时编辑";
 });
 $("#site-query")?.addEventListener("keydown", (event) => {
   if ((event as KeyboardEvent).key === "Enter") {
@@ -870,7 +883,7 @@ function updateWallpaperPreview() {
   const type = getInput(form, "backgroundType").value;
   const value = getInput(form, "backgroundValue").value.trim();
   preview.dataset.theme = "glass";
-  preview.style.backgroundImage = 'url("/images/glass-wallpaper.svg")';
+  preview.style.backgroundImage = 'url("/images/glass-city.jpg")';
   preview.style.backgroundColor = "";
   if (type === "image" && /^\/media\/backgrounds\/[a-f0-9-]{36}\.(png|jpg|webp)$/.test(value)) {
     preview.style.backgroundImage = `url("${value}")`;

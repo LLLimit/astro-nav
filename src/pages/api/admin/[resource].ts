@@ -54,7 +54,9 @@ export const GET: APIRoute = async ({ params, cookies, url }) => {
             : 0;
         const status = url.searchParams.get("status") || "";
         const sort = url.searchParams.get("sort") || "order";
-        return ok(await pageSites({ page, query, category, status, sort }));
+        const requestedIcon = url.searchParams.get("icon") || "";
+        const icon = ["default", "custom"].includes(requestedIcon) ? requestedIcon : "";
+        return ok(await pageSites({ page, query, category, status, sort, icon }));
       }
       case "settings":
         return ok(await getSettings());

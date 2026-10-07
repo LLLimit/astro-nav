@@ -13,7 +13,7 @@ const backgroundImage = /^\/media\/backgrounds\/[a-f0-9-]{36}\.(png|jpg|webp)$/.
 const backgroundColor = /^#[a-fA-F0-9]{6}$/.test(settings.backgroundValue) ? settings.backgroundValue : '';
 const background = settings.backgroundType === 'image' && backgroundImage ? `url('${backgroundImage}')` : settings.backgroundType === 'color' && backgroundColor ? `linear-gradient(${backgroundColor},${backgroundColor})` : '';
 const wallpaperMode = background ? settings.backgroundType : 'default';
-const glassBackground = background || "url('/images/glass-wallpaper.svg')";
+const glassBackground = background || "url('/images/glass-city.jpg')";
 const backgroundStyle = [`--background-blur:${settings.backgroundBlur}px`,`--background-brightness:${settings.backgroundBrightness}`,`--background-overlay:${settings.backgroundOverlay}`,`--background-position:${settings.backgroundPosition}`,`--background-size:${settings.backgroundSize}`,`--custom-background:${glassBackground}`].join(';');
 ---
 <!doctype html>
@@ -43,7 +43,7 @@ const backgroundStyle = [`--background-blur:${settings.backgroundBlur}px`,`--bac
       } catch { document.documentElement.dataset.theme = document.documentElement.dataset.defaultTheme; }
     </script>
   </head>
-  <body style={backgroundStyle} data-glass-wallpaper={settings.backgroundType === 'color' && backgroundColor ? backgroundColor : backgroundImage && settings.backgroundType === 'image' ? backgroundImage : '/images/glass-wallpaper.svg'}>
+  <body style={backgroundStyle} data-glass-wallpaper={settings.backgroundType === 'color' && backgroundColor ? backgroundColor : backgroundImage && settings.backgroundType === 'image' ? backgroundImage : '/images/glass-city.jpg'}>
     <slot />
   </body>
 </html>

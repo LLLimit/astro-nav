@@ -7,6 +7,7 @@ import {
   sql,
   like,
   or,
+  not,
   isNull,
   type SQL,
 } from "drizzle-orm";
@@ -178,6 +179,7 @@ export async function pageSites(options: {
   category: number;
   status: string;
   sort: string;
+  icon?: string;
 }) {
   const conditions: SQL[] = [];
   if (options.query) {
@@ -198,6 +200,9 @@ export async function pageSites(options: {
   }
   if (options.status === "1" || options.status === "0")
     conditions.push(eq(sites.enabled, options.status === "1"));
+  const usesDefaultIcon = or(isNull(sites.icon), eq(sites.icon, ""), eq(sites.icon, "/images/default.svg"))!;
+  if (options.icon === "default") conditions.push(usesDefaultIcon);
+  else if (options.icon === "custom") conditions.push(not(usesDefaultIcon));
   const filter = conditions.length ? and(...conditions) : undefined;
   const order =
     options.sort === "clicks"
